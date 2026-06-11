@@ -1,0 +1,57 @@
+---
+sidebar_position: 2
+title: Block & Entity Hooks
+---
+
+# Block & Entity Hooks
+
+## BlockEntityHooks
+
+`dev.architectury.hooks.block.BlockEntityHooks`
+
+```java
+BlockEntityHooks.syncData(myBlockEntity);
+```
+
+`syncData(BlockEntity)` pushes a block entity's current data to nearby clients (it marks the block
+as changed so the server resends it). Call it after changing data you want clients to see.
+
+:::warning[Server-side only]
+`syncData` throws if called on the logical client. Guard with `if (!level.isClientSide()) { ... }`
+first.
+:::
+
+## EntityHooks
+
+`dev.architectury.hooks.level.entity.EntityHooks`
+
+```java
+@Nullable Entity entity = EntityHooks.fromCollision(collisionContext);
+```
+
+`fromCollision(CollisionContext)` returns the entity behind a collision context (for example,
+inside `Block#getCollisionShape`), or `null` if there isn't one.
+
+## PlayerHooks
+
+`dev.architectury.hooks.level.entity.PlayerHooks`
+
+```java
+if (!PlayerHooks.isFake(player)) {
+    // a real player, not a fake/automation player
+}
+```
+
+`isFake(Player)` reports whether a player is a "fake" player (such as those some automation mods
+use). Handy when you only want to react to genuine players.
+
+## ItemEntityHooks
+
+`dev.architectury.hooks.level.entity.ItemEntityHooks`
+
+```java
+IntValue lifespan = ItemEntityHooks.lifespan(itemEntity);
+```
+
+`lifespan(ItemEntity)` returns the item entity's lifespan as an `IntValue` you can read (and, on
+NeoForge, modify). On Fabric it's a read-only value of `6000`.

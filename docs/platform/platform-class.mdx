@@ -1,0 +1,77 @@
+---
+sidebar_position: 1
+title: Platform
+---
+
+# Platform
+
+`dev.architectury.platform.Platform`
+
+A static utility for asking about the running game: which loader, which environment, where the
+game's folders are, and what mods are loaded.
+
+## Loader detection
+
+```java
+if (Platform.isFabric()) {
+    // Fabric-specific path
+} else if (Platform.isNeoForge()) {
+    // NeoForge-specific path
+}
+```
+
+You rarely need this in common code - the whole point of Architectury is to avoid loader checks -
+but it's there when a behavior genuinely differs.
+
+## Game folders
+
+All return an absolute, normalized `java.nio.file.Path`:
+
+| Method | Folder |
+|---|---|
+| `getGameFolder()` | The Minecraft instance root. |
+| `getConfigFolder()` | The `config` folder. |
+| `getModsFolder()` | The `mods` folder. |
+
+```java
+Path config = Platform.getConfigFolder().resolve("mymod.json");
+```
+
+## Environment
+
+```java
+Env env = Platform.getEnvironment();   // Env.CLIENT or Env.SERVER
+boolean dev = Platform.isDevelopmentEnvironment();
+String mcVersion = Platform.getMinecraftVersion();
+```
+
+`getEnvironment()` returns Architectury's [`Env`](./environment.mdx); `getEnv()` returns the
+platform's `EnvType` if you need it. To **run** code only on one side, use
+[`EnvExecutor`](./environment.mdx).
+
+## Querying mods
+
+```java
+if (Platform.isModLoaded("jei")) {
+    // integrate with JEI
+}
+
+Mod mod = Platform.getMod("mymod");                 // throws if absent
+Optional<Mod> maybe = Platform.getOptionalMod("jei"); // empty if absent
+
+Collection<Mod> all = Platform.getMods();
+Collection<String> ids = Platform.getModIds();
+```
+
+`getMod` / `getOptionalMod` return a [`Mod`](./mod.mdx) container with the mod's metadata.
+
+## Accessing the server
+
+`dev.architectury.utils.GameInstance`
+
+```java
+MinecraftServer server = GameInstance.getServer();
+```
+
+Returns the currently running `MinecraftServer`, or `null` when none is running (for example, on
+the title screen of a client). This is the cross-platform way to reach the server from anywhere.

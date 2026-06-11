@@ -1,0 +1,54 @@
+---
+sidebar_position: 1
+slug: /
+title: Introduction
+---
+
+# Architectury API
+
+**Architectury API** is a multiplatform Minecraft mod API. It abstracts the differences
+between **Fabric** and **NeoForge** so you can write your mod's logic **once**, in a shared
+`common` codebase, and ship it on both loaders.
+
+The two loaders expose what is conceptually the same functionality
+- events, networking, registries, fluids - through completely different APIs.
+Architectury API allows you to use both APIs, with only one codebase,
+so you spend your time building your mod instead of writing two versions of every feature.
+
+```java
+// Common code, runs on both Fabric and NeoForge.
+PlayerEvent.PLAYER_JOIN.register(player -> {
+    player.sendSystemMessage(Component.literal("Hello World!"));
+});
+```
+
+## Why use it?
+
+- **Less boilerplate** for multiplatform mods - no per-loader glue code.
+- **90+ event hooks** covering the server, the client, and the game world.
+- **Cross-platform registries, networking, and fluids** behind one API.
+- **Open source** (LGPL-3.0).
+
+You write your mod against the common Architectury API, and it works on both Fabric and
+NeoForge - no per-loader code required.
+
+## What's in the documentation
+
+This site documents every feature of the API, grouped by system:
+
+- **[Getting Started](./getting-started)** - adding the API to your project and where your code goes.
+- **[Events](./events)** - listeners, event results, common and client events.
+- **[Registries](./registries)** - creative tabs, menus, biomes, fuel, rendering, GUI, particles, key mappings, and more.
+- **[Networking](./networking)** - registering and sending packets between client and server.
+- **[Fluids](./fluids)** - the `FluidStack` abstraction and the base classes for custom fluids, liquid blocks, and buckets.
+- **[Platform & Environment](./platform)** - loader detection, mod metadata, and environment-gated code.
+- **[Hooks](./hooks)** - thin wrappers over vanilla Minecraft classes.
+- **[Injected Interfaces](./other/injected-interfaces)** - extra `arch$` methods Architectury adds to vanilla types.
+
+## Resources
+
+- **GitHub:** [architectury/architectury-api](https://github.com/architectury/architectury-api)
+- **Discord:** [Join the community](https://discord.gg/C2RdJDpRBP)
+- **Architectury Loom:** [architectury/architectury-loom](https://github.com/architectury/architectury-loom) - a fork of Fabric Loom adding multiplatform capabilities
+- **Architectury Plugin:** [architectury/architectury-plugin](https://github.com/architectury/architectury-plugin) - the Gradle plugin used alongside Architectury Loom in multiplatform projects
+- **Mod Template Generator:** [Template Generator](https://generate.architectury.dev/) - the recommended way to start a new project

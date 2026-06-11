@@ -1,0 +1,39 @@
+---
+sidebar_position: 8
+title: Reload Listeners
+---
+
+# Reload Listeners
+
+`dev.architectury.registry.ReloadListenerRegistry`
+
+Register a resource/data reload listener - code that runs when resource packs or data packs are
+(re)loaded - so you can load your own custom JSON resources or data.
+
+## Registering a listener
+
+```java
+ReloadListenerRegistry.register(
+    PackType.SERVER_DATA,          // data packs (use CLIENT_RESOURCES for resource packs)
+    new MyDataReloadListener(),    // your PreparableReloadListener
+    Identifier.fromNamespaceAndPath(MyMod.MOD_ID, "my_data")
+);
+```
+
+- The `PackType` selects which side reloads trigger the listener: `SERVER_DATA` for data packs,
+  `CLIENT_RESOURCES` for resource packs.
+- The `Identifier` is a unique id for your listener.
+
+## Ordering with dependencies
+
+An overload accepts a `Collection<Identifier>` of other listener ids that must run **before**
+yours, so you can depend on their results:
+
+```java
+ReloadListenerRegistry.register(
+    PackType.SERVER_DATA,
+    new MyDataReloadListener(),
+    Identifier.fromNamespaceAndPath(MyMod.MOD_ID, "my_data"),
+    List.of(Identifier.fromNamespaceAndPath(MyMod.MOD_ID, "my_other_data"))
+);
+```

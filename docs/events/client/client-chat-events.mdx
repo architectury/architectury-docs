@@ -1,0 +1,42 @@
+---
+sidebar_position: 8
+title: Client Chat Events
+---
+
+# Client Chat Events
+
+`dev.architectury.event.events.client.ClientChatEvent`
+
+Intercept chat the client **sends** or **receives**.
+
+## Events
+
+| Event | Listener method | Returns |
+|---|---|---|
+| `SEND` | `send(String message, Component component)` | `EventResult` - interrupt to cancel sending. |
+| `RECEIVED` | `process(ChatType.Bound type, Component message)` | `CompoundEventResult<Component>` - interrupt with a `Component` to override the displayed message. |
+
+For `SEND`, the decorated `component` may be `null`. For `RECEIVED`, return an interrupting
+`CompoundEventResult` carrying a replacement `Component` to change what's shown.
+
+## Examples
+
+Stop the client from sending messages that start with a marker:
+
+```java
+ClientChatEvent.SEND.register((message, component) -> {
+    if (message.startsWith("//")) {
+        return EventResult.interruptFalse(); // don't send it
+    }
+    return EventResult.pass();
+});
+```
+
+Rewrite incoming messages:
+
+```java
+ClientChatEvent.RECEIVED.register((type, message) -> {
+    Component edited = message.copy().append(" 🌟");
+    return CompoundEventResult.interruptTrue(edited);
+});
+```

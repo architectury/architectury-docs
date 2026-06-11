@@ -1,0 +1,41 @@
+---
+sidebar_position: 9
+title: Chat Events
+---
+
+# Chat Events
+
+`dev.architectury.event.events.common.ChatEvent`
+
+Server-side chat events: decorate outgoing messages, or intercept messages the server receives.
+
+## Events
+
+| Event | Listener method | Returns |
+|---|---|---|
+| `DECORATE` | `decorate(ServerPlayer player, ChatComponent component)` | `void` |
+| `RECEIVED` | `received(ServerPlayer player, Component)` | `EventResult` - interrupt to cancel the message. |
+
+For `DECORATE`, the `ChatComponent` lets you read and replace the message via `get()` and
+`set(Component)`. In both events the `player` may be `null`.
+
+## Examples
+
+Add a prefix to every chat message:
+
+```java
+ChatEvent.DECORATE.register((player, component) -> {
+    component.set(Component.literal("[MyMod] ").append(component.get()));
+});
+```
+
+Block messages containing a banned word:
+
+```java
+ChatEvent.RECEIVED.register((player, message) -> {
+    if (message.getString().contains("forbidden")) {
+        return EventResult.interruptFalse(); // drop the message
+    }
+    return EventResult.pass();
+});
+```

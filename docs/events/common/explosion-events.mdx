@@ -1,0 +1,41 @@
+---
+sidebar_position: 11
+title: Explosion Events
+---
+
+# Explosion Events
+
+`dev.architectury.event.events.common.ExplosionEvent`
+
+Hook into explosions before they happen or as they detonate.
+
+## Events
+
+| Event | Listener method | Returns |
+|---|---|---|
+| `PRE` | `explode(Level, Explosion)` | `EventResult` - interrupt to cancel the explosion. |
+| `DETONATE` | `explode(Level, Explosion, List<Entity> affectedEntities)` | `void` (notification). |
+
+`PRE` fires before the explosion happens, so you can cancel it. `DETONATE` fires as it goes off
+and gives you the list of affected entities to inspect or modify.
+
+## Examples
+
+Prevent explosions from damaging the world in a protected level:
+
+```java
+ExplosionEvent.PRE.register((level, explosion) -> {
+    if (isProtected(level)) {
+        return EventResult.interruptFalse(); // cancel the explosion
+    }
+    return EventResult.pass();
+});
+```
+
+Inspect what an explosion is about to affect:
+
+```java
+ExplosionEvent.DETONATE.register((level, explosion, affectedEntities) -> {
+    affectedEntities.removeIf(entity -> entity instanceof ItemEntity); // spare dropped items
+});
+```

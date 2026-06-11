@@ -1,0 +1,31 @@
+---
+sidebar_position: 10
+title: Client Recipe Update Events
+---
+
+# Client Recipe Update Events
+
+`dev.architectury.event.events.client.ClientRecipeUpdateEvent`
+
+Fires when the client receives an updated set of recipes from the server. All notifications.
+
+## Events
+
+| Event | Listener method | Notes |
+|---|---|---|
+| `EVENT` | `update(RecipeAccess recipeAccess)` | The recipe list was updated. |
+| `ADD` | `add(RecipeAccess, List<ClientboundRecipeBookAddPacket.Entry>)` | Recipes were added. *Experimental.* |
+| `REMOVE` | `remove(RecipeAccess, List<RecipeDisplayId>)` | Recipes were removed. *Experimental.* |
+
+## Example
+
+```java
+ClientRecipeUpdateEvent.EVENT.register(recipeAccess -> {
+    // rebuild any cached recipe data on the client
+});
+```
+
+:::warning[Experimental]
+`ADD` and `REMOVE` are marked experimental and may change in a future release. Prefer `EVENT`
+unless you specifically need the deltas.
+:::

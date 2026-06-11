@@ -1,0 +1,66 @@
+---
+sidebar_position: 3
+title: Fluid Hooks
+---
+
+# Fluid Hooks
+
+Helper classes that expose fluid behavior which differs between loaders. Most of the common ones
+are also reachable through [`FluidStack`](../fluids/fluid-stack.mdx) directly.
+
+## FluidStackHooks
+
+`dev.architectury.hooks.fluid.FluidStackHooks`
+
+Naming, serialization, and physical properties of fluids.
+
+| Method | Description |
+|---|---|
+| `getName(FluidStack)` / `getTranslationKey(FluidStack)` | Display name / translation key. |
+| `bucketAmount()` | The amount representing one bucket (1000 on NeoForge, 81000 on Fabric). |
+| `read(...)` / `write(...)` | Read/write a `FluidStack` to a buffer or NBT tag. |
+| `getLuminosity(fluid, level, pos)` | Light level, 0–15. |
+| `getTemperature(fluid, level, pos)` | Temperature in kelvin (300 ≈ room temperature). |
+| `getViscosity(fluid, level, pos)` | Viscosity (1000 for water); lower flows faster. |
+
+The property getters accept either a `FluidStack` or a `Fluid`, and the `level`/`pos` may be
+`null`.
+
+```java
+int light = FluidStackHooks.getLuminosity(stack, level, pos);
+int temp = FluidStackHooks.getTemperature(Fluids.LAVA, null, null);
+```
+
+## FluidBucketHooks
+
+`dev.architectury.hooks.fluid.FluidBucketHooks`
+
+```java
+Fluid fluid = FluidBucketHooks.getFluid(someBucketItem);
+```
+
+Returns the fluid a `BucketItem` contains - handled here because NeoForge defers the fluid on
+its bucket items.
+
+## ClientFluidStackHooks
+
+`dev.architectury.hooks.client.fluid.ClientFluidStackHooks`
+
+Client-only helpers for fluid rendering - the textures and tint a fluid draws with:
+
+| Method | Returns |
+|---|---|
+| `getStillTexture(...)` | The still `TextureAtlasSprite`. |
+| `getFlowingTexture(...)` | The flowing `TextureAtlasSprite`. |
+| `getColor(...)` | The tint color. |
+
+Each accepts a `FluidStack`, a `Fluid`, or a `FluidState` (with optional level and position).
+
+```java
+TextureAtlasSprite still = ClientFluidStackHooks.getStillTexture(stack);
+int tint = ClientFluidStackHooks.getColor(stack);
+```
+
+:::warning[Client-only]
+Only call `ClientFluidStackHooks` from client-side code.
+:::

@@ -1,0 +1,68 @@
+---
+sidebar_position: 3
+title: Player Events
+---
+
+# Player Events
+
+`dev.architectury.event.events.common.PlayerEvent`
+
+Server-side events about players: joining and leaving, crafting and smelting, picking up and
+dropping items, attacking, opening menus, and more.
+
+## Notification events
+
+These can't be cancelled - they tell you something happened.
+
+| Event | Listener method | Description |
+|---|---|---|
+| `PLAYER_JOIN` | `join(ServerPlayer)` | A player joined the server. |
+| `PLAYER_QUIT` | `quit(ServerPlayer)` | A player logged out. |
+| `PLAYER_RESPAWN` | `respawn(ServerPlayer newPlayer, boolean conqueredEnd, Entity.RemovalReason)` | A player respawned. |
+| `PLAYER_CLONE` | `clone(ServerPlayer oldPlayer, ServerPlayer newPlayer, boolean wonGame)` | A player respawned; lets you copy data from the old player to the new one. |
+| `PLAYER_ADVANCEMENT` | `award(ServerPlayer, AdvancementHolder)` | A player earned an advancement. |
+| `CRAFT_ITEM` | `craft(Player, ItemStack constructed, Container inventory)` | A player took a crafted item out of the result slot. |
+| `SMELT_ITEM` | `smelt(Player, ItemStack smelted)` | A player took a smelted item out of the output slot. |
+| `PICKUP_ITEM_POST` | `pickup(Player, ItemEntity, ItemStack)` | A player picked up an item. |
+| `CHANGE_DIMENSION` | `change(ServerPlayer, ResourceKey<Level> oldLevel, ResourceKey<Level> newLevel)` | A player changed dimension. |
+| `OPEN_MENU` | `open(Player, AbstractContainerMenu)` | A player opened a container menu. |
+| `CLOSE_MENU` | `close(Player, AbstractContainerMenu)` | A player closed a container menu. |
+
+## Cancellable events
+
+These return an [`EventResult`](../../events/event-results.mdx) (or `InteractionResult`) so you
+can cancel the action.
+
+| Event | Listener method | Returns |
+|---|---|---|
+| `PICKUP_ITEM_PRE` | `canPickup(Player, ItemEntity, ItemStack)` | `EventResult` - interrupt to prevent the pickup. |
+| `DROP_ITEM` | `drop(Player, ItemEntity)` | `EventResult` - interrupt to prevent the drop. |
+| `ATTACK_ENTITY` | `attack(Player, Level, Entity target, InteractionHand, EntityHitResult)` | `EventResult` - interrupt to cancel the attack. |
+| `FILL_BUCKET` | `fill(Player, Level, ItemStack, HitResult)` | `InteractionResult` - return non-`PASS` to handle/cancel it. |
+
+## Examples
+
+```java
+PlayerEvent.PLAYER_JOIN.register(player -> {
+    player.sendSystemMessage(Component.literal("Welcome, " + player.getName().getString() + "!"));
+});
+```
+
+Copy custom data across a respawn:
+
+```java
+PlayerEvent.PLAYER_CLONE.register((oldPlayer, newPlayer, wonGame) -> {
+    // transfer your mod's per-player data from oldPlayer to newPlayer
+});
+```
+
+Prevent players from attacking villagers:
+
+```java
+PlayerEvent.ATTACK_ENTITY.register((player, level, target, hand, hitResult) -> {
+    if (target instanceof Villager) {
+        return EventResult.interruptFalse(); // cancel the attack
+    }
+    return EventResult.pass();
+});
+```

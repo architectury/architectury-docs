@@ -1,0 +1,10 @@
+{
+  "label": "Networking",
+  "position": 5,
+  "link": {
+    "type": "generated-index",
+    "slug": "/networking",
+    "title": "Networking",
+    "description": "Send custom packets between the client and server with one cross-platform API. Define a payload, register a receiver, and send it - Architectury handles the Fabric/NeoForge differences."
+  }
+}

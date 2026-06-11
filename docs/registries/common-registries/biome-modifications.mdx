@@ -1,0 +1,54 @@
+---
+sidebar_position: 6
+title: Biome Modifications
+---
+
+# Biome Modifications
+
+`dev.architectury.registry.level.biome.BiomeModifications`
+
+Change biome features and properties at load time - add mob spawns, place features, tweak
+climate or colors - across both loaders with one API.
+
+## The four phases
+
+Modifications run in a fixed order so the result is predictable. Each phase has its own method:
+
+| Phase | Method | Use for |
+|---|---|---|
+| 1. Add | `addProperties` | Adding new features/spawns to biomes. |
+| 2. Remove | `removeProperties` | Removing existing features/spawns. |
+| 3. Replace | `replaceProperties` | Swapping existing features for new ones. |
+| 4. Post-process | `postProcessProperties` | Final tweaks after everything else. |
+
+You aren't strictly required to use each phase for its named purpose, but doing so keeps the
+ordering predictable when multiple mods modify the same biome.
+
+## Applying a modification
+
+Each method takes a `BiConsumer<BiomeContext, BiomeProperties.Mutable>`, and optionally a
+`Predicate<BiomeContext>` to select which biomes to affect. Without a predicate, the modification
+applies to every biome.
+
+```java
+// Add a mob spawn to every forest biome:
+BiomeModifications.addProperties(
+    context -> context.hasTag(BiomeTags.IS_FOREST),     // which biomes
+    (context, properties) -> {
+        // mutate `properties` here
+    });
+```
+
+### BiomeContext
+
+The `BiomeContext` tells you about the biome being modified:
+
+- `getKey()` - the biome's `Identifier` (optional).
+- `getProperties()` - read-only view of the current properties.
+- `hasTag(TagKey<Biome>)` - whether the biome is in a given tag.
+
+### BiomeProperties.Mutable
+
+The second argument lets you read and change the biome's climate, effects, generation settings,
+and spawns. Those property objects come from Architectury's biome hooks - see
+[Biome Hooks](../../hooks/biome-hooks.mdx) for the full surface of `BiomeProperties`.

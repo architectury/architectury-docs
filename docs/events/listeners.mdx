@@ -1,0 +1,44 @@
+---
+sidebar_position: 1
+title: Listeners
+---
+
+# Listeners
+
+Listeners are registered with a single call and run on both loaders. Register them from the common module's `init()` method so the subscription is active on both NeoForge and Fabric.
+
+
+## Registering a listener
+
+Call `register` with an implementation of the listener interface. Because listener interfaces
+are functional interfaces, you almost always pass a lambda:
+
+```java
+BlockEvent.BREAK.register((level, pos, state, player, xp) -> {
+    System.out.println(player.getName().getString() + " broke a block at " + pos);
+    return EventResult.pass();
+});
+```
+
+The lambda's parameters match the listener method (`breakBlock`), and its return type matches
+too. Some events return nothing (`void`), some return an [`EventResult`](./event-results.mdx) so
+you can influence the outcome.
+
+Register your listeners during mod initialization - typically from the `init()` method in your
+`common` module, so the subscription applies on both loaders.
+
+## What your listener returns
+
+The listener method's return type tells you whether you can affect the outcome:
+
+- Some events return **`void`** - they're pure notifications. Every listener is called and none
+  can cancel anything (for example, `BlockEvent.FALLING_LAND`).
+- Some events return an [**`EventResult`**](./event-results.mdx) - your listener can let the
+  event continue or interrupt it and override the outcome, for example to cancel a block break.
+
+The next page explains [event results](./event-results.mdx) in detail.
+
+:::note
+If you create your own events for other code to listen to, see
+[Creating Your Own Events](./creating-events.mdx).
+:::

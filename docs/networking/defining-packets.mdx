@@ -1,0 +1,67 @@
+---
+sidebar_position: 1
+title: Defining a Packet
+---
+
+# Defining a Packet
+
+A packet in Architectury is a vanilla **`CustomPacketPayload`**: a small object holding the data
+you want to send, plus a type id and a codec that reads and writes it. Define one as a `record`.
+
+## The payload record
+
+```java
+public record OpenGuiPayload(BlockPos pos) implements CustomPacketPayload {
+    // A unique id for this packet type.
+    public static final Type<OpenGuiPayload> TYPE =
+        new Type<>(Identifier.fromNamespaceAndPath(MyMod.MOD_ID, "open_gui"));
+
+    // Reads and writes the payload's fields over the network.
+    public static final StreamCodec<RegistryFriendlyByteBuf, OpenGuiPayload> CODEC =
+        StreamCodec.composite(
+            BlockPos.STREAM_CODEC, OpenGuiPayload::pos,
+            OpenGuiPayload::new
+        );
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
+    }
+}
+```
+
+Three pieces make it work:
+
+- **`TYPE`** - a `CustomPacketPayload.Type` wrapping a unique `Identifier`. This is what you pass
+  when registering and what identifies the packet on the wire.
+- **`CODEC`** - a `StreamCodec` that serializes the payload. `StreamCodec.composite` pairs each
+  field's codec with its accessor, ending with the constructor that rebuilds the record.
+- **`type()`** - returns `TYPE`.
+
+## Composing the codec
+
+`StreamCodec.composite` takes each field as a *(codec, getter)* pair, then your constructor. For
+example, a payload with two fields:
+
+```java
+public record SyncStatsPayload(int level, float xp) implements CustomPacketPayload {
+    public static final Type<SyncStatsPayload> TYPE =
+        new Type<>(Identifier.fromNamespaceAndPath(MyMod.MOD_ID, "sync_stats"));
+
+    public static final StreamCodec<RegistryFriendlyByteBuf, SyncStatsPayload> CODEC =
+        StreamCodec.composite(
+            ByteBufCodecs.VAR_INT,   SyncStatsPayload::level,
+            ByteBufCodecs.FLOAT,     SyncStatsPayload::xp,
+            SyncStatsPayload::new
+        );
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() { return TYPE; }
+}
+```
+
+`ByteBufCodecs` provides codecs for primitives and common types; many Minecraft types (like
+`BlockPos`) expose their own `STREAM_CODEC`.
+
+Once you've defined a payload, see [Sending & Receiving](./sending-and-receiving.mdx) to wire it
+up.

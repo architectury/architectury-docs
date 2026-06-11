@@ -1,0 +1,141 @@
+---
+sidebar_position: 1
+title: Setup
+---
+
+# Setup
+
+This page covers what you need to start a multiplatform mod with Architectury, and how to add
+the Architectury API to it.
+
+## Requirements
+
+These are the **minimum** versions Architectury API requires. Newer releases within the same
+Minecraft version work too.
+
+| Requirement | Version | Notes |
+|---|---|---|
+| **Java** | 25+ | Mojang ship Minecraft 26.1+ with Java 25. |
+| **Minecraft** | 26.1.2 | Fabric technically supports 26.1 and 26.1.1 too. |
+| **Fabric Loader** | 0.18.5+ | |
+| **Fabric API** | 0.144.1+ | |
+| **NeoForge** | 26.1.2.21-beta+ | NeoForge 26.1 and 26.1.1 are not supported. |
+| **Architectury Loom** | 1.17+ | Starting with Minecraft 26.1, Minecraft is no longer obfuscated, use `loom-no-remap`. |
+| **Architectury Plugin** | 3.5+ | |
+
+:::warning[Java version]
+Make sure your IDE and Gradle JVM are both set to a JDK 25 or newer.
+:::
+
+## Start from the template generator (recommended)
+
+The fastest way to start a project with Architectury API is the official template generator:
+
+```
+https://generate.architectury.dev/
+```
+
+The generator produces a ready-to-build project with the `common`, `fabric`, and `neoforge`
+subprojects and the Architectury API dependency already configured. Pick the template that matches
+the loaders you want to target.
+
+
+## Adding the API to an existing project
+
+To port an existing project to both Fabric and NeoForge, the project structure must be updated before adding the API dependency.
+
+Start from the [template generator](https://generate.architectury.dev/) and copy your existing code into it, or restructure your existing project by hand.
+A `common` module holds shared code, and each platform has its own module for its entrypoint.
+This separates the API dependency and shared logic from platform-specific code.
+
+The steps below restructure an existing project by hand. Platform-specific implementations will need to be moved to the appropriate platform module.
+
+First, create a `common` module for your shared code, and move all your existing code and assets there.
+
+Then create a `fabric` and `neoforge` module for the platform-specific code, and add the appropriate entrypoints that call into your common initializer.
+
+Your structure should now look like this:
+```
+my-mod/
+├── common/      -> shared code + shared resources 
+├── fabric/      -> Fabric entrypoint (fabric.mod.json + initializer)
+├── neoforge/    -> NeoForge entrypoint (neoforge.mods.toml + initializer)
+├── gradle.properties
+├── settings.gradle
+└── build.gradle
+```
+
+Once your project is structured correctly, add the Architectury Loom plugin first to your root `build.gradle`:
+
+```groovy title="build.gradle"
+plugins {
+    id "dev.architectury.loom-no-remap" version "1.17-SNAPSHOT" apply false
+}
+```
+
+Then add the API dependency to each package:
+
+```groovy title="common/build.gradle"
+dependencies {
+    // Compile against the common API in shared code.
+    implementation "dev.architectury:architectury:${architectury_api_version}"   
+}
+```
+
+```groovy title="fabric/build.gradle"
+dependencies {
+    implementation "dev.architectury:architectury-fabric:${architectury_api_version}"
+}
+```
+
+```groovy title="neoforge/build.gradle"
+dependencies {
+    implementation "dev.architectury:architectury-neoforge:${architectury_api_version}"
+}
+```
+
+Specify the API version in `gradle.properties`:
+
+```properties title="gradle.properties"
+# Done to increase the memory available to Gradle.
+org.gradle.jvmargs=-Xmx4G
+org.gradle.parallel=true
+
+# Mod properties
+mod_id = modid
+mod_version = 1.0.0
+maven_group = com.example.examplemod
+archives_name = examplemod
+enabled_platforms = fabric,neoforge
+
+# Minecraft properties
+minecraft_version = 26.1.2
+
+# Dependencies
+architectury_api_version = 20.0.5
+fabric_loader_version = 0.19.3
+fabric_api_version = 0.150.0
+neoforge_version = 26.1.2.71
+```
+
+Add the Architectury Maven repository to `settings.gradle` and include the subprojects:
+
+```groovy title="settings.gradle"
+pluginManagement {
+    repositories {
+        maven { url "https://maven.fabricmc.net/" }
+        maven { url "https://maven.architectury.dev/" }
+        maven { url "https://maven.neoforged.net/releases" }
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = 'modid'
+
+include 'common'
+include 'fabric'
+include 'neoforge'
+```
+
+Once the dependency resolves, continue to [Project Structure](./project-structure.mdx) to see
+where your code goes.

@@ -1,0 +1,98 @@
+---
+sidebar_position: 1
+title: Injected Interfaces
+---
+
+# Injected Interfaces
+
+Architectury adds methods directly to several vanilla Minecraft types. Each added method uses the
+`arch$` prefix and is called on an instance of the type; no registration or import is required.
+
+```java
+Identifier id = MyMod.RUBY.get().arch$registryName();
+```
+
+These methods are available on `Item`, `Block`, `Fluid`, `EntityType`, `Item.Properties`,
+`BucketItem`, and `LiquidBlock`.
+
+## Registry name and holder
+
+`Item`, `Block`, `Fluid`, and `EntityType` each provide two accessors:
+
+| Method | Returns | Description |
+|---|---|---|
+| `arch$registryName()` | `Identifier` | The entry's `namespace:path` identifier, or `null` if it is not registered. |
+| `arch$holder()` | `Holder<T>` | The registry holder for the entry. |
+
+`arch$registryName()` resolves an entry's identifier without querying a specific registry:
+
+```java
+Identifier blockId = level.getBlockState(pos).getBlock().arch$registryName();
+Identifier itemId  = stack.getItem().arch$registryName();
+Identifier fluidId = fluidStack.getFluid().arch$registryName();
+
+if (itemId != null && itemId.getNamespace().equals(MyMod.MOD_ID)) {
+    // entry belongs to this mod
+}
+```
+
+`arch$holder()` returns the `Holder<T>` for an entry, for example when reconstructing a value from
+a stored identifier:
+
+```java
+Holder<Fluid> holder = BuiltInRegistries.FLUID.getValue(savedId).arch$holder();
+```
+
+## Creative tab on `Item.Properties`
+
+`Item.Properties` provides `arch$tab(...)`, which assigns the item to a creative mode tab during
+construction. Three overloads are available:
+
+| Overload | Accepts |
+|---|---|
+| `arch$tab(CreativeModeTab)` | A tab instance. |
+| `arch$tab(ResourceKey<CreativeModeTab>)` | A tab registry key, including vanilla tabs. |
+| `arch$tab(DeferredSupplier<CreativeModeTab>)` | A `RegistrySupplier` obtained from a `DeferredRegister`. |
+
+`RegistrySupplier` implements `DeferredSupplier`, so a registered tab can be passed directly:
+
+```java
+public static final RegistrySupplier<Item> RUBY = ITEMS.register("ruby", () -> {
+    ResourceKey<Item> key = ResourceKey.create(Registries.ITEM,
+        Identifier.fromNamespaceAndPath(MyMod.MOD_ID, "ruby"));
+    return new Item(new Item.Properties().arch$tab(MyMod.MY_TAB).setId(key));
+});
+```
+
+:::note
+See [Creative Tabs](../registries/common-registries/creative-tabs.mdx) for adding items to tabs you
+do not own and for creating the tab itself, and
+[DeferredRegister](../registries/common-registries/deferred-register.mdx) for the required `setId`.
+:::
+
+## Fluid accessors
+
+`BucketItem` and `LiquidBlock` expose the fluid they represent, resolved identically on both
+loaders:
+
+| Type | Method | Returns |
+|---|---|---|
+| `BucketItem` | `arch$getFluid()` | `Fluid` - the fluid the bucket contains. |
+| `LiquidBlock` | `arch$getFluid()` | `FlowingFluid` - the fluid the block represents. |
+
+```java
+if (stack.getItem() instanceof BucketItem bucket) {
+    Fluid fluid = bucket.arch$getFluid();
+}
+```
+
+This applies to vanilla buckets and to [custom fluid buckets](../fluids/fluid-base-classes.mdx).
+
+## Reference
+
+| Method | Available on | Returns |
+|---|---|---|
+| `arch$registryName()` | `Item`, `Block`, `Fluid`, `EntityType` | `Identifier` (nullable) |
+| `arch$holder()` | `Item`, `Block`, `Fluid`, `EntityType` | `Holder<T>` |
+| `arch$tab(...)` | `Item.Properties` | `Item.Properties` |
+| `arch$getFluid()` | `BucketItem`, `LiquidBlock` | `Fluid` / `FlowingFluid` |

@@ -1,0 +1,44 @@
+---
+sidebar_position: 11
+title: Client Command Events
+---
+
+# Client Command Events
+
+`dev.architectury.event.events.client.ClientCommandRegistrationEvent`
+
+Register **client-side** commands - commands that run entirely on the client without contacting
+the server.
+
+## Events
+
+| Event | Listener method |
+|---|---|
+| `EVENT` | `register(CommandDispatcher<ClientCommandSourceStack> dispatcher, CommandBuildContext context)` |
+
+Build commands with the helper methods on the event interface:
+
+- `ClientCommandRegistrationEvent.literal(String)` - a literal argument builder.
+- `ClientCommandRegistrationEvent.argument(String, ArgumentType)` - a required argument builder.
+
+The command source is a `ClientCommandSourceStack`, which exposes (note the `arch$` prefix):
+
+- `arch$sendSuccess(Supplier<Component>, boolean broadcastToAdmins)`
+- `arch$sendFailure(Component)`
+- `arch$getPlayer()`, `arch$getPosition()`, `arch$getRotation()`, `arch$getLevel()`
+
+## Example
+
+```java
+ClientCommandRegistrationEvent.EVENT.register((dispatcher, context) -> {
+    dispatcher.register(ClientCommandRegistrationEvent.literal("ping")
+        .executes(ctx -> {
+            ctx.getSource().arch$sendSuccess(() -> Component.literal("pong"), false);
+            return 1;
+        }));
+});
+```
+
+:::note
+For commands that run on the server, see [Command Events](../common/command-events.mdx).
+:::

@@ -1,0 +1,34 @@
+---
+sidebar_position: 1
+title: Menu Screens
+---
+
+# Menu Screens
+
+`dev.architectury.registry.client.gui.MenuScreenRegistry`
+
+Binds a client `Screen` to a `MenuType`, so opening the menu on the server shows your GUI on the
+client. This is the client half of [Menus](../common-registries/menus.mdx).
+
+## Registering a screen
+
+```java
+MenuScreenRegistry.registerScreenFactory(MyMod.MY_MENU.get(), MyScreen::new);
+```
+
+The factory is a `ScreenFactory<H, S>` - given the menu, the player `Inventory`, and a title
+`Component`, it returns your screen:
+
+```java
+public class MyScreen extends AbstractContainerScreen<MyMenu> {
+    public MyScreen(MyMenu menu, Inventory inventory, Component title) {
+        super(menu, inventory, title);
+    }
+    // ...
+}
+```
+
+:::warning[Client-only]
+Call this from client-side code only - your `MenuType` is registered in common code, but its
+screen belongs on the client.
+:::

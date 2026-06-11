@@ -1,0 +1,136 @@
+---
+sidebar_position: 1
+title: DeferredRegister
+---
+
+# DeferredRegister
+
+`dev.architectury.registry.registries.DeferredRegister`
+
+`DeferredRegister` is the main way to register content (items, blocks, entities, and anything
+else with a vanilla registry) in an Architectury mod. You declare your entries up front, then
+register them all with one call from your common initializer - and it works on both loaders.
+
+## Creating a register
+
+Create one `DeferredRegister` per registry you want to add to, passing your mod id and the
+vanilla registry key from `net.minecraft.core.registries.Registries`:
+
+```java
+public final class MyMod {
+    public static final String MOD_ID = "mymod";
+
+    public static final DeferredRegister<Item> ITEMS =
+        DeferredRegister.create(MOD_ID, Registries.ITEM);
+    public static final DeferredRegister<Block> BLOCKS =
+        DeferredRegister.create(MOD_ID, Registries.BLOCK);
+}
+```
+
+Call `register(id, supplier)` for each entry. The `id` is just the path - your mod id is used as
+the namespace automatically. You get back a [`RegistrySupplier`](#registrysupplier) you can keep
+a reference to.
+
+The supplier is only invoked when it's time to actually register, so it's safe to reference other
+registry entries inside it.
+
+```java
+public static final RegistrySupplier<Item> RUBY = ITEMS.register("ruby", () -> {
+    ResourceKey<Item> key = ResourceKey.create(Registries.ITEM,
+        Identifier.fromNamespaceAndPath(MOD_ID, "ruby"));
+    return new Item(new Item.Properties().setId(key));
+});
+```
+
+:::warning[Set the id on items and blocks]
+In this Minecraft version, an `Item` or `Block` must be told its own registry id. Pass a
+`ResourceKey` to `setId(...)` on the `Item.Properties` / `BlockBehaviour.Properties` you build, as
+shown above. Forgetting this throws when the object is constructed.
+:::
+
+Because that's the same boilerplate for every entry, it's common to wrap it in a small helper:
+
+```java
+public static <T extends Item> RegistrySupplier<T> item(String name, Function<Item.Properties, T> factory) {
+    return ITEMS.register(name, () -> {
+        ResourceKey<Item> key = ResourceKey.create(Registries.ITEM,
+            Identifier.fromNamespaceAndPath(MOD_ID, name));
+        return factory.apply(new Item.Properties().setId(key));
+    });
+}
+
+// Now registering is a one-liner:
+public static final RegistrySupplier<Item> RUBY = item("ruby", Item::new);
+```
+
+Blocks work the same way, using `Registries.BLOCK` and `BlockBehaviour.Properties.of().setId(key)`.
+
+There's also an overload taking a full `Identifier` if you need a different namespace:
+`register(Identifier id, Supplier<T> supplier)`.
+
+## Committing the register
+
+Declaring entries isn't enough - you must call `register()` (no arguments) **once** from your
+common initializer to commit them:
+
+```java
+public static void init() {
+    ITEMS.register();
+    BLOCKS.register();
+}
+```
+
+Make sure `init()` runs from both your Fabric and NeoForge entrypoints (see
+[Project Structure](../../getting-started/project-structure.mdx)).
+
+:::warning
+Calling `register()` more than once on the same `DeferredRegister` throws. Call it exactly once.
+:::
+
+## RegistrySupplier
+
+`dev.architectury.registry.registries.RegistrySupplier`
+
+Each `register(...)` call returns a `RegistrySupplier<T>`. It's a lazy reference to your
+registered object - it implements both `Supplier<T>` and the vanilla `Holder<T>`, so you can use
+it almost anywhere either is expected.
+
+| Method | Description |
+|---|---|
+| `get()` | The registered object. Throws if not registered yet. |
+| `isPresent()` | Whether the object has been registered. |
+| `getId()` | The entry's `Identifier`. |
+| `getKey()` | The entry's `ResourceKey<T>`. |
+| `listen(Consumer<T>)` | Runs a callback once the entry is registered (or immediately if it already is). |
+
+```java
+// Use the supplier wherever you need the object:
+ItemStack stack = new ItemStack(MyMod.RUBY.get());
+
+// React once an entry is fully registered:
+MyMod.RUBY.listen(item -> {
+    // ...
+});
+```
+
+:::tip
+Because `RegistrySupplier` is also a `Holder`, you can pass it directly to APIs that expect a
+`Holder<T>` without calling `get()` yourself.
+:::
+
+## Iterating entries
+
+A `DeferredRegister<T>` is `Iterable<RegistrySupplier<T>>`, so you can loop over everything you
+registered:
+
+```java
+for (RegistrySupplier<Item> entry : ITEMS) {
+    // ...
+}
+```
+
+## Next
+
+- Need to read from a registry, or create your **own** registry? See [Registrar & RegistrarManager](./registrar.mdx).
+- Registering specific content types has dedicated helpers - see the other pages in this section
+  (creative tabs, menus, entity attributes, biomes, fuel, reload listeners).

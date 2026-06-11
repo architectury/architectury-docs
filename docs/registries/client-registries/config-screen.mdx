@@ -1,0 +1,28 @@
+---
+sidebar_position: 7
+title: Config Screen
+---
+
+# Config Screen
+
+`dev.architectury.platform.client.ConfigurationScreenRegistry`
+
+Register a configuration screen for your mod - the screen opened from the mod's entry in the
+loader's mods list.
+
+## Registering a screen
+
+```java
+ConfigurationScreenRegistry.register(
+    Platform.getMod(MyMod.MOD_ID),       // your Mod
+    parent -> new MyConfigScreen(parent) // ConfigurationScreenProvider
+);
+```
+
+The provider is given the **parent** screen (so you can return to it when the user closes your
+config), and returns the `Screen` to display.
+
+`Platform.getMod(id)` returns the `Mod` for your mod id - see
+[Mod Metadata](../../platform/mod.mdx).
+
+Register from client-side code.

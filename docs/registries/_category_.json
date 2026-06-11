@@ -1,0 +1,10 @@
+{
+  "label": "Registries",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "slug": "/registries",
+    "title": "Registries",
+    "description": "Register your content and behavior with the various registries provided by Architectury. This includes both common registries, which work on both the server and the client, and client-only registries for things like renderers and key mappings."
+  }
+}

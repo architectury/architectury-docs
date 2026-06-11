@@ -1,0 +1,46 @@
+---
+sidebar_position: 1
+title: Lifecycle Events
+---
+
+# Lifecycle Events
+
+`dev.architectury.event.events.common.LifecycleEvent`
+
+Fires as the **server** starts up, shuts down, and loads or saves levels. Use these to set up
+and tear down server-side state at the right moment. All of these are notifications (you can't
+cancel them).
+
+## Events
+
+| Event | Listener receives | When |
+|---|---|---|
+| `SERVER_BEFORE_START` | `MinecraftServer` | The earliest point the server is available. |
+| `SERVER_STARTING` | `MinecraftServer` | During server startup. |
+| `SERVER_STARTED` | `MinecraftServer` | Server is ready to accept players. |
+| `SERVER_STOPPING` | `MinecraftServer` | Server has begun shutting down. |
+| `SERVER_STOPPED` | `MinecraftServer` | Server has fully stopped. |
+| `SERVER_LEVEL_LOAD` | `ServerLevel` | A level was loaded on the server. |
+| `SERVER_LEVEL_UNLOAD` | `ServerLevel` | A level was unloaded on the server. |
+| `SERVER_LEVEL_SAVE` | `ServerLevel` | A level is being saved. |
+| `SETUP` | - (`Runnable`) | Common setup has begun. Registries should be populated by now. |
+
+The server-state events use the `ServerState` listener (`stateChanged(MinecraftServer)`); the
+level events use `ServerLevelState` (`act(ServerLevel)`).
+
+## Example
+
+```java
+LifecycleEvent.SERVER_STARTED.register(server -> {
+    System.out.println("Server is up with " + server.getPlayerCount() + " players");
+});
+
+LifecycleEvent.SERVER_LEVEL_LOAD.register(level -> {
+    // initialize per-level data
+});
+```
+
+:::note
+For the **client** equivalents (`CLIENT_STARTED`, `CLIENT_STOPPING`, `CLIENT_LEVEL_LOAD`,
+`CLIENT_SETUP`), see [Client Lifecycle Events](../client/client-lifecycle-events.mdx).
+:::

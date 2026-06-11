@@ -1,0 +1,30 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* Brand palette matched to the Architectury API logo (orange -> red crane). */
+:root {
+  --ifm-color-primary: #ef5a24;
+  --ifm-color-primary-dark: #d75120;
+  --ifm-color-primary-darker: #cb4c1f;
+  --ifm-color-primary-darkest: #a73f19;
+  --ifm-color-primary-light: #f16b3a;
+  --ifm-color-primary-lighter: #f17345;
+  --ifm-color-primary-lightest: #f48c66;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  --ifm-color-primary: #f5703c;
+  --ifm-color-primary-dark: #dc6436;
+  --ifm-color-primary-darker: #d05f33;
+  --ifm-color-primary-darkest: #ab4e2a;
+  --ifm-color-primary-light: #f67e50;
+  --ifm-color-primary-lighter: #f68559;
+  --ifm-color-primary-lightest: #f89b76;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}

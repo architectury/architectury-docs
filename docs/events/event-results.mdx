@@ -1,0 +1,89 @@
+---
+sidebar_position: 2
+title: Event Results
+---
+
+# Event Results
+
+Many events let a listener **influence what happens next** - cancel a vanilla action, force it
+to succeed, or stay out of the way. They do this by returning an `EventResult`.
+
+## `EventResult`
+
+`dev.architectury.event.EventResult` answers two questions at once:
+
+1. **Should later listeners still run?** - whether this result *interrupts further evaluation*.
+2. **What is the outcome?** - an optional `true` / `false` / *no outcome* value.
+
+When an event fires, listeners are called in order. The first listener that returns an
+interrupting result stops the chain, and its outcome becomes the event's outcome. If no listener
+interrupts, the event passes and vanilla behavior continues.
+
+### Creating a result
+
+| Factory method | Interrupts? | Outcome | Typical meaning |
+|---|---|---|---|
+| `EventResult.pass()` | no | none | "I'm not interested, carry on." |
+| `EventResult.interruptDefault()` | yes | none | Stop other listeners, fall back to the default/vanilla outcome. |
+| `EventResult.interruptTrue()` | yes | `true` | Stop and force the "success / allow" outcome. |
+| `EventResult.interruptFalse()` | yes | `false` | Stop and force the "fail / deny" outcome (commonly: cancel). |
+| `EventResult.interrupt(Boolean)` | yes | value | Programmatic form; `null` means no outcome. |
+
+What `true` / `false` *mean* is documented per event - but the common case is that
+`interruptFalse()` cancels a vanilla action.
+
+### Example: cancelling a block break
+
+```java
+BlockEvent.BREAK.register((level, pos, state, player, xp) -> {
+    if (state.is(Blocks.BEDROCK) && !player.hasPermissions(2)) {
+        // Stop here and deny the break - vanilla won't destroy the block.
+        return EventResult.interruptFalse();
+    }
+    // Not our concern; let other listeners and vanilla decide.
+    return EventResult.pass();
+});
+```
+
+### Reading a result
+
+If you fire an event yourself, inspect the returned result:
+
+```java
+EventResult result = SomeEvent.EVENT.invoker().doThing(...);
+
+result.interruptsFurtherEvaluation(); // was the chain interrupted?
+result.isPresent();   // does it carry an outcome?
+result.isEmpty();     // ...or no outcome?
+result.isTrue();      // outcome == true
+result.isFalse();     // outcome == false
+result.value();       // Boolean outcome, or null when there's none
+```
+
+## `CompoundEventResult<T>`
+
+Some events need to return **extra data** alongside the outcome - for instance, an event that
+can replace the item stack involved. `dev.architectury.event.CompoundEventResult<T>` pairs an
+`EventResult` with an object of type `T`.
+
+Its factory methods mirror `EventResult`, but each also takes the extra object:
+
+```java
+CompoundEventResult.pass();                       // continue, no data
+CompoundEventResult.interruptTrue(myStack);       // stop, true outcome, return myStack
+CompoundEventResult.interruptFalse(myStack);      // stop, false outcome, return myStack
+CompoundEventResult.interruptDefault(myStack);    // stop, no outcome, return myStack
+CompoundEventResult.interrupt(Boolean, myStack);  // programmatic form
+```
+
+And it exposes the same inspection methods as `EventResult`, plus:
+
+```java
+compound.result();  // the underlying EventResult view
+compound.object();  // the extra data (null when passing)
+```
+
+:::note
+`pass()` never carries data - a passing result's `object()` is always `null`. Only interrupt
+the event when you actually want to supply a value.
+:::

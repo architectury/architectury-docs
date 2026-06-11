@@ -1,0 +1,27 @@
+---
+sidebar_position: 6
+title: Other Hooks
+---
+
+# Other Hooks
+
+## DyeColorHooks
+
+`dev.architectury.hooks.DyeColorHooks`
+
+```java
+int rgb = DyeColorHooks.getColorValue(DyeColor.RED);
+```
+
+`getColorValue(DyeColor)` returns the dye's RGB color value, resolved consistently across loaders.
+
+## PackRepositoryHooks
+
+`dev.architectury.hooks.PackRepositoryHooks`
+
+```java
+PackRepositoryHooks.addSource(packRepository, myRepositorySource);
+```
+
+`addSource(PackRepository, RepositorySource)` registers an extra pack source into a pack
+repository - for example, to ship a built-in resource or data pack with your mod.

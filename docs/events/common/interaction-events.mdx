@@ -1,0 +1,61 @@
+---
+sidebar_position: 6
+title: Interaction Events
+---
+
+# Interaction Events
+
+`dev.architectury.event.events.common.InteractionEvent`
+
+Fires when a player clicks blocks, entities, items, or the air. These are the hooks for
+right-click / left-click behavior.
+
+## Events
+
+| Event | Listener method | Returns |
+|---|---|---|
+| `LEFT_CLICK_BLOCK` | `click(Player, InteractionHand, BlockPos, Direction face)` | `InteractionResult` |
+| `RIGHT_CLICK_BLOCK` | `click(Player, InteractionHand, BlockPos, Direction face)` | `InteractionResult` |
+| `RIGHT_CLICK_ITEM` | `click(Player, InteractionHand)` | `InteractionResult` |
+| `INTERACT_ENTITY` | `interact(Player, Entity, InteractionHand)` | `EventResult` |
+| `FARMLAND_TRAMPLE` | `trample(Level, BlockPos, BlockState, double distance, Entity)` | `InteractionResult` |
+| `CLIENT_LEFT_CLICK_AIR` | `click(Player, InteractionHand)` | `void` - **client only** |
+| `CLIENT_RIGHT_CLICK_AIR` | `click(Player, InteractionHand)` | `void` - **client only** |
+
+:::note[Working with `InteractionResult`]
+Most of these return a vanilla `InteractionResult` rather than an `EventResult`. Return
+`InteractionResult.PASS` to stay out of the way and let other listeners and vanilla logic run.
+Return any **non-`PASS`** result (such as `InteractionResult.SUCCESS` or `FAIL`) to handle the
+interaction yourself and stop further processing.
+:::
+
+## Examples
+
+Right-clicking a specific block opens your custom UI:
+
+```java
+InteractionEvent.RIGHT_CLICK_BLOCK.register((player, hand, pos, face) -> {
+    BlockState state = player.level().getBlockState(pos);
+    if (state.is(MyBlocks.MY_MACHINE.get())) {
+        // ...open your menu...
+        return InteractionResult.SUCCESS; // handled - stop here
+    }
+    return InteractionResult.PASS;
+});
+```
+
+Cancel interacting with a protected entity:
+
+```java
+InteractionEvent.INTERACT_ENTITY.register((player, entity, hand) -> {
+    if (isProtected(entity)) {
+        return EventResult.interruptFalse();
+    }
+    return EventResult.pass();
+});
+```
+
+:::warning
+`CLIENT_LEFT_CLICK_AIR` and `CLIENT_RIGHT_CLICK_AIR` only fire on the client, and the player is
+always the `LocalPlayer`. Only register them from client-side code.
+:::
