@@ -142,13 +142,13 @@ const config = {
                 href: 'https://github.com/architectury/architectury-api',
               },
               {
-                label: 'Architectury Templates',
-                href: 'https://github.com/architectury/architectury-templates',
+                label: 'Architectury Template Generator',
+                href: 'https://generate.architectury.dev/',
               },
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Architectury. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Architectury.`,
       },
       prism: {
         theme: prismThemes.github,
