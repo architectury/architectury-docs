@@ -10,7 +10,7 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Architectury API',
+  title: 'Architectury',
   tagline: 'Write your Minecraft mod once, run it on Fabric and NeoForge',
   favicon: 'img/logo.png',
 
@@ -47,8 +47,9 @@ const config = {
       ({
         docs: {
           sidebarPath: './sidebars.js',
-          // Serve the docs at the site root so the Introduction is the homepage.
-          routeBasePath: '/',
+          // Serve the Architectury API docs under /api (the "API" tab).
+          // The site root (/) redirects here via src/pages/index.js.
+          routeBasePath: '/api',
           // Set this to your docs repo to enable "edit this page" links.
           editUrl:
             'https://github.com/architectury/architectury-api/tree/main/docs/',
@@ -76,6 +77,33 @@ const config = {
     ],
   ],
 
+  // Additional docs instances for the "Loom" and "Plugin" tabs. The API tab is
+  // the default docs instance configured in the preset above.
+  plugins: [
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'loom',
+        path: 'loom',
+        routeBasePath: 'loom',
+        sidebarPath: './sidebarsLoom.js',
+        editUrl:
+          'https://github.com/architectury/architectury-api/tree/main/loom/',
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'plugin',
+        path: 'plugin',
+        routeBasePath: 'plugin',
+        sidebarPath: './sidebarsPlugin.js',
+        editUrl:
+          'https://github.com/architectury/architectury-api/tree/main/plugin/',
+      },
+    ],
+  ],
+
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
@@ -85,20 +113,36 @@ const config = {
         respectPrefersColorScheme: true,
       },
       navbar: {
-        title: 'Architectury API',
+        title: 'Architectury',
         logo: {
-          alt: 'Architectury API Logo',
+          alt: 'Architectury Logo',
           src: 'img/logo.png',
         },
         items: [
           {
             type: 'docSidebar',
             sidebarId: 'tutorialSidebar',
+            docsPluginId: 'default',
             position: 'left',
-            label: 'Documentation',
+            label: 'API',
+          },
+          {
+            type: 'docSidebar',
+            sidebarId: 'loomSidebar',
+            docsPluginId: 'loom',
+            position: 'left',
+            label: 'Loom',
+          },
+          {
+            type: 'docSidebar',
+            sidebarId: 'pluginSidebar',
+            docsPluginId: 'plugin',
+            position: 'left',
+            label: 'Plugin',
           },
           {
             type: 'docsVersionDropdown',
+            docsPluginId: 'default',
             position: 'right',
           },
           {
@@ -121,7 +165,7 @@ const config = {
             items: [
               {
                 label: 'Introduction',
-                to: '/',
+                to: '/api',
               },
             ],
           },

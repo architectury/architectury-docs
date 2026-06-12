@@ -1,0 +1,92 @@
+---
+sidebar_position: 3
+title: Gradle Configurations
+---
+
+# Gradle Configurations
+
+Gradle [configurations](https://docs.gradle.org/7.6/userguide/dependency_management_terminology.html#sub:terminology_configuration) are named groups of dependencies and artifacts.
+
+## Configurations for classpath dependencies
+
+These configurations add dependencies to the compile or runtime classpaths. All of them are available in all Fabric Loom and Architectury Loom projects (as of 1.1).
+
+<table>
+  <thead>
+    <tr>
+      <th rowSpan="2">Configuration</th>
+      <th colSpan="2">In your projects</th>
+      <th colSpan="2">In others' projects</th>
+      <th rowSpan="2">Added by</th>
+    </tr>
+    <tr>
+      <th>Compile</th>
+      <th>Runtime</th>
+      <th>Compile</th>
+      <th>Runtime</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>implementation</code></td>
+      <td>✔</td><td>✔</td><td>❌</td><td>✔</td>
+      <td>Java plugin</td>
+    </tr>
+    <tr>
+      <td><code>api</code></td>
+      <td>✔</td><td>✔</td><td>✔</td><td>✔</td>
+      <td>Java Library plugin</td>
+    </tr>
+    <tr>
+      <td><code>compileOnly</code></td>
+      <td>✔</td><td>❌</td>
+      <td colSpan="2"><em>Not published</em></td>
+      <td>Java plugin</td>
+    </tr>
+    <tr>
+      <td><code>compileOnlyApi</code></td>
+      <td>✔</td><td>❌</td><td>✔</td><td>❌</td>
+      <td>Java Library plugin</td>
+    </tr>
+    <tr>
+      <td><code>localRuntime</code></td>
+      <td>❌</td><td>✔</td>
+      <td colSpan="2"><em>Not published</em></td>
+      <td>Loom</td>
+    </tr>
+    <tr>
+      <td><code>runtimeOnly</code></td>
+      <td>❌</td><td>✔</td><td>❌</td><td>✔</td>
+      <td>Java plugin</td>
+    </tr>
+  </tbody>
+</table>
+
+All of these configurations have `mod*` variants such as `modImplementation` to use when depending on a mod. The dependency will get remapped to the project mappings and added to the correct mod classpaths.
+
+Others **won't** see the configurations marked with "Not published" when they depend on your project.
+
+## Other Loom configurations
+
+* `include`: Bundles a mod or a library within your mod.
+* `forgeRuntimeLibrary` (added by Architectury Loom in Forge mode):
+  * Adds a library to the runtime classpath for Forge.
+  * Note: mods should not added to it! Use one of the configurations above instead.
+* `namedElements`
+  * Contains the raw mod jar produced by the current project.
+  * This is an **outgoing** configuration that is primarily intended for use in project dependencies, e.g. `project(path: ':common', configuration: 'namedElements')`.
+
+## Architectury Plugin configurations
+
+* `development(Fabric|Forge|Quilt|NeoForge)`
+  * Used in platform modules for the common module in Architectury mods so that Architectury Transformer can apply its changes (`@ExpectPlatform` etc.)
+* `transformProduction(Fabric|Forge|Quilt|NeoForge)`
+  * Contains the transformed classes of the common module for bundling in production mod jars for the individual platforms.
+  * Note: this is an **outgoing** configuration of common Architectury subprojects. it should only be depended on in platform projects!
+
+## Other commonly used configurations
+
+* `shadow` (added by the [Shadow](https://plugins.gradle.org/plugin/com.github.johnrengelman.shadow) plugin)
+  * Includes runtime dependencies that are **not** bundled into the `all` jar created by the `shadowJar` task.
+  * This is often confusing since modders often talk about "shadowing" dependencies when they mean including them using Shadow.
+  * See also: [Shadow User Guide: Configuring Shadow](https://gradleup.com/shadow/configuration/#configuring-the-runtime-classpath)

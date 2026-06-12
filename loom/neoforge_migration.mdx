@@ -1,0 +1,329 @@
+---
+sidebar_position: 3
+title: NeoForge Migration
+---
+
+# NeoForge Migration
+
+Since an Architectury Loom 1.4 update, NeoForge 1.20.2 support has been introduced into Architectury. This page serves as a tutorial on how to migrate to NeoForge, depending on your current project, and your goals. The tutorials can be applied in reverse if needed.
+
+<u>We assume the migration is not easy, please feel free to step by the Discord server for assistance.</u>
+
+##### Acknowledgments
+
+The bulk of the work on porting Architectury Loom is done by [@Juuxel](https://github.com/Juuxel).
+
+### About MinecraftForge
+
+To learn more about our support on MinecraftForge and NeoForge, you may read on the migration page for 1.20.2. To summerize, we will continue to provide support for MinecraftForge and NeoForge's **toolchain** for the forseeable future. For Architectury API, we will prioritize compatibility for NeoForge over MinecraftForge in situations where it is impossible to maintain compatibility for both.
+
+### About Yarn
+
+Architectury Loom had always supported Yarn as a mappings option for Forge, and will continue to do so for NeoForge. NeoForge has removed srg mappings as intermediary, such that both the development environment and production environment both use the same mappings. 
+
+Architectury Loom 1.4 adds "hopes" and "prayers" (a joke, it is not actually that bad) to NeoForge in order to support Yarn. Remapping may not be done perfectly, so here are some things to take note.
+
+1. Write ATs in Mojang Mappings
+2. Don't use JS coremods
+3. Don't use reflection to access Minecraft internals (while we have a solution to remap reflection, it is not yet in Architectury Loom because we really **really** don't want to use it)
+4. MixinExtras may not function properly if you use Yarn (We have ditched refmaps for mixins, and our remapper is currently not capable of remapping MixinExtras)
+
+## Migrate your Forge-only project to NeoForge
+
+**1. Update to latest Gradle & Architectury Loom 1.4**
+
+On the top of `build.gradle`, replace the loom version with `1.4-SNAPSHOT`.
+
+**2. Modify `gradle.properties`**
+
+```properties
+loom.platform = neoforge
+```
+
+**3. Add the NeoForge maven**
+
+Add `maven { url "https://maven.neoforged.net/releases/" }` to your `build.gradle`.
+
+**4. Remove the `loom.forge {}` block**
+
+The mixins declared should go directly to `META-INF/mods.toml` (see https://github.com/neoforged/FancyModLoader/pull/31)). Converted ATs can be added directly to `remapJar`.
+
+Custom AT paths can be modified in the `loom.neoForge {}` block.
+
+**5. Replace the Forge dependency**
+
+```groovy
+neoForge "net.neoforged:neoforge:VERSION"
+```
+
+**6. Make sure your project's JavaCompile version is 17.**
+
+You should have something similar to this, change the version to 17.
+
+```groovy
+tasks.withType(JavaCompile) {
+  // ensure that the encoding is set to UTF-8, no matter what the system default is
+  // this fixes some edge cases with special characters not displaying correctly // see [http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html](http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html)
+  // If Javadoc is generated, this must be specified in that task too.
+  options.encoding = "UTF-8"
+  options.release = 17
+}
+```
+
+**7. Refresh Gradle & Run Configs, Fix Errors & META-INF/mods.toml & Profit??**
+
+## Migrate your Architectury project to NeoForge
+
+NeoForge can be added as an additional subproject for any Architectury Projects.
+
+While Forge-like setups are possible (where Forge and NeoForge projects share common code), it is **not recommended** since you will need to do manual remapping configuration, which is not trivial and is prone to crashes.
+
+The following section is split between three variants:
+
+1. Migrate your Forge subproject to NeoForge
+2. Add a NeoForge subproject independent of the Forge subproject
+3. Add a Forge-like subproject, and a NeoForge subproject
+
+### Migrate your Forge subproject to NeoForge
+
+**1. Update to latest Gradle & Architectury Loom 1.4**
+
+On the top of `build.gradle`, replace the loom version with `1.4-SNAPSHOT`.
+
+**2. Modify `forge/gradle.properties`**
+
+```properties
+loom.platform = neoforge
+```
+
+**3. Add the NeoForge maven**
+
+Add `maven { url "https://maven.neoforged.net/releases/" }` to your `forge/build.gradle` or `build.gradle`'s subprojects block.
+
+**4. Remove the `loom.forge {}` block in `forge/build.gradle`**
+
+The mixins declared should go directly to `META-INF/mods.toml` (see https://github.com/neoforged/FancyModLoader/pull/31)). Converted ATs can be added directly to `remapJar`.
+
+Custom AT paths can be modified in the `loom.neoForge {}` block.
+
+**5. Replace the Forge dependency in `forge/build.gradle`**
+
+```groovy
+neoForge "net.neoforged:neoforge:VERSION"
+```
+
+If you are using Architectury API, make sure to change `architectury-forge` to `architectury-neoforge`.
+
+**6. Make sure your project's JavaCompile version is 17.**
+
+You should have something similar to this, change the version to 17.
+
+```groovy
+tasks.withType(JavaCompile) {
+  // ensure that the encoding is set to UTF-8, no matter what the system default is
+  // this fixes some edge cases with special characters not displaying correctly // see [http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html](http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html)
+  // If Javadoc is generated, this must be specified in that task too.
+  options.encoding = "UTF-8"
+  options.release = 17
+}
+```
+
+**7. Add NeoForge as a compile target in `common/build.gradle`**
+
+```groovy
+architectury {
+  common("fabric", "neoforge")
+}
+```
+
+**8. Modify `forge/build.gradle`**
+
+First, change `forge()` to `neoForge()` in the architectury block.
+
+```groovy
+architectury {
+  platformSetupLoomIde()
+  neoForge()
+}
+```
+
+**Optional:** If you want to keep `forge` as the package extension for `@ExpectPlatform` annotations, set `platformPackage` in the `neoForge` block and `common`:
+
+```groovy
+// In common/build.gradle
+architectury {
+  common("fabric", "neoforge") {
+    // This means map neoforge to forge
+    it.platformPackage "neoforge", "forge"
+  }
+}
+
+// In forge/build.gradle
+architectury {
+  platformSetupLoomIde()
+  neoForge {
+    platformPackage = "forge"
+  }
+}
+```
+
+Then, modify your configurations, change `developmentForge` to `developmentNeoForge`:
+
+```groovy
+configurations {
+  common
+  shadowCommon // Don't use shadow from the shadow plugin because we don't want IDEA to index this.
+  compileClasspath.extendsFrom common
+  runtimeClasspath.extendsFrom common
+  developmentNeoForge.extendsFrom common
+}
+```
+
+Now, in your dependencies block, change `transformProductionForge` to `transformProductionNeoForge`.
+
+```groovy
+dependencies {
+  // ...
+  shadowCommon(project(path: ":common", configuration: "transformProductionNeoForge")) { transitive false }
+}
+```
+
+**9. Check usages of `ArchitecturyTarget.getCurrentTarget()`**
+
+ArchitecturyTarget.getCurrentTarget() will return "neoforge" on NeoForge, check if you are expecting that.
+
+**10. Refresh Gradle & Run Configs, Fix Errors & forge/META-INF/mods.toml & Profit??**
+
+### Add a NeoForge subproject independent of the Forge subproject
+
+**1. Initial Setup**
+
+Create a `neoforge` folder, and copy your `forge` folder's `build.gradle` and `gradle.properties` to it.
+
+Then in `settings.gradle`, add `include "neoforge"` under the forge line.
+
+**2. Setup NeoForge**
+
+Follow the steps above in "Migrate your Forge subproject to NeoForge", but make sure you are applying to the `neoforge` project instead of the `forge` project.
+
+Also remember, in your `common/build.gradle`, we want all three loaders in `common()`.
+
+```groovy
+architectury {
+  common("fabric", "forge", "neoforge")
+}
+```
+
+### Add a Forge-like subproject, and a NeoForge subproject
+
+**1. Initial Setup**
+
+* Create a `forgelike` and `neoforge` folder.
+* Copy your `forge` folder's `build.gradle` and `gradle.properties` to `neoforge` folder.
+* Copy your `common` folder's `build.gradle` to `forgelike` folder
+* Copy your `forge` folder's `gradle.properties` to `forgelike` folder.
+* In `settings.gradle`, add `include "forgelike"` above the forge line.
+* In `settings.gradle`, add `include "neoforge"` under the forge line.
+
+**2. Setup NeoForge**
+
+Follow the steps above in "Migrate your Forge subproject to NeoForge", but make sure you are applying to the `neoforge` project instead of the `forge` project.
+
+Make sure you do the "optional" platformPackage step, you most likely want to share packages between both. Also remember, in your `common/build.gradle`, we want all three loaders in `common()`.
+
+```groovy
+architectury {
+  common("fabric", "forge", "neoforge") {
+    it.platformPackage "neoforge", "forge"
+  }
+}
+```
+
+**3. Setup Forge-Like**
+
+In `forgelike/build.gradle`, replace `common()` with `forgeLike()`, and also apply `platformPackage`.
+
+```groovy
+architectury {
+    forgeLike(["forge", "neoforge"]) {
+        it.platformPackage "neoforge", "forge"
+    }
+}
+```
+
+Then, remove the dependency on Fabric Loader, and add the dependency on MinecraftForge, and common, it should look like this:
+
+```groovy
+dependencies {
+  forge "net.minecraftforge:forge:${rootProject.architectury.minecraft}-${rootProject.forge_version}"
+  compileOnly(project(path: ":common", configuration: "namedElements")) { transitive false }
+}
+```
+
+**4. Setup Forge**
+
+In `forge/build.gradle`, add dependency to the forge-like project, the syntax should be equal to any other common projects.
+
+```groovy
+dependencies {
+  forge "net.minecraftforge:forge:${rootProject.architectury.minecraft}-${rootProject.forge_version}"
+
+  common(project(path: ":common", configuration: "namedElements")) { transitive false }
+  common(project(path: ":forgelike", configuration: "namedElements")) { transitive false }
+  shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive false }
+  shadowCommon(project(path: ":forgelike", configuration: "transformProductionForge")) { transitive false }
+}
+```
+
+**5. Setup NeoForge**
+
+First, we need to add the forgeLike configuration, then we extend compile/runtimeClasspath on it, like how we do it for common. We will also extend developmentForgeLike on our configuration.
+
+```groovy
+configurations {
+  common
+  forgeLike
+  shadowCommon // Don't use shadow from the shadow plugin because we don't want IDEA to index this.
+  compileClasspath.extendsFrom common, forgeLike
+  runtimeClasspath.extendsFrom common, forgeLike
+  developmentNeoForge.extendsFrom common
+  developmentForgeLike.extendsFrom forgeLike
+}
+```
+
+Then, similar to above, we will add the dependency on Forge-Like's project. You will notice how we are using `transformProductionNeoForge` instead of `transformProductionForge` and `forgeLike` instead of `common` only on the forgelike project.
+
+```groovy
+dependencies {
+  neoforge "net.neoforged:neoforge:${rootProject.neoforge_version}"
+
+  common(project(path: ":common", configuration: "namedElements")) { transitive false }
+  forgeLike(project(path: ":forgelike", configuration: "namedElements")) { transitive false }
+  shadowCommon(project(path: ":common", configuration: "transformProductionNeoForge")) { transitive false }
+  shadowCommon(project(path: ":forgelike", configuration: "transformProductionNeoForge")) { transitive false }
+}
+```
+
+**6. Setup NeoForge remaps**
+
+Since there are class renames in NeoForge, we will want to remap them. Architectury Plugin automatically added remaps to NeoForge's packages, and the `MinecraftForge` -> `NeoForge` class, but you will need to do the rest.
+
+Here's an example on remapping `IForgeItem` to `IItemExtension`.
+
+```groovy
+// In forgelike/build.gradle
+architectury {
+  forgeLike(["forge", "neoforge"]) {
+    it.platformPackage "neoforge", "forge"
+    it.remapForgeLike "net/minecraftforge/common/extensions/IForgeItem", "net/neoforged/neoforge/common/extensions/IItemExtension"
+  }
+}
+
+// In neoforge/build.gradle
+architectury {
+  neoForge {
+    platformPackage = "forge"
+    remapForgeLike "net/minecraftforge/common/extensions/IForgeItem", "net/neoforged/neoforge/common/extensions/IItemExtension"
+  }
+}
+```

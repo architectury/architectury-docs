@@ -1,0 +1,36 @@
+---
+sidebar_position: 7
+title: Custom @ExpectPlatform Package Extension
+---
+
+# Custom @ExpectPlatform Package Extension
+
+By default, Architectury Transformer expects the implementation of @ExpectPlatform at the platform name (or "fabric" on quilt). For example, a class on `a.b.c.Foo` expects `a.b.c.fabric.FooImpl`, `a.b.c.forge.FooImpl`, and `a.b.c.neoforge.FooImpl`.
+
+Changing this may be useful for creating a Forge-like sub-project, where MinecraftForge and NeoForge both share the same package name.
+
+#### Applying Custom Extension
+
+NeoForge is displayed here as an example, this radioactively applies to any compile targets.
+
+On `common/build.gradle`:
+
+```groovy
+architectury {
+  common("fabric", "forge", "neoforge") { // The different compile targets you have
+    // Change the expected package of the neoforge target to "newpackage"
+    it.platformPackage "neoforge", "newpackage"
+  }
+}
+```
+
+On `neoforge/build.gradle`:
+
+```groovy
+architectury {
+  [..]
+  neoForge {
+    platformPackage = "newPackage"
+  }
+}
+```

@@ -1,0 +1,23 @@
+---
+sidebar_position: 10
+title: Changing Log Level
+---
+
+# Changing Log Level
+
+Property `fabric.log.level` (Defaulted **info**) is used for managing the log level to SOUT.
+
+You can override this property by declaring the following:
+
+```groovy
+loom {
+    launches {
+        client {
+            property "fabric.log.level", "debug"
+        }
+        server {
+            property "fabric.log.level", "debug"
+        }
+    }
+}
+```

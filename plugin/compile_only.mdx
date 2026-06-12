@@ -1,0 +1,44 @@
+---
+sidebar_position: 4
+title: Compile Only Mode
+---
+
+# Compile Only Mode
+
+Since Architectury Runtime Transformer poses issues with Hotswapping (still getting worked on) and must require run configurations to go through Gradle (for the better), optionally, you can get rid of it entirely.
+
+## Issues
+
+Compile Only mode will not apply any [Architectury Injectables](/plugin/platform_specific) during runtime (`ArchitecturyTarget` / `@PlatformOnly` / `@Environment` / `EnvType` remapping are not available).
+Additionally, `@ExpectPlatform` will not be applied.
+
+## Steps
+
+First, apply the compileOnly mode in the root `build.gradle` in the **allprojects** block. It is very important that you apply this to all projects.
+
+```groovy
+allprojects {
+    // ... other code
+    
+    architectury {
+        compileOnly()
+    }
+}
+```
+
+Then, remove any `developmentXXX` dependencies in your fabric / quilt and forge subprojects, and add the following code to the **subprojects** block in root build.gradle.
+
+```groovy
+if (project.path != ':common') {
+    loom {
+        mods {
+            main { // to match the default mod generated for Forge
+                sourceSet project.sourceSets.main
+                sourceSet project(':common').sourceSets.main
+            }
+        }
+    }
+}
+```
+
+Then you are done! Remove any references to Architectury Injectables (e.g. ExpectPlatform), and [regenerate the run configurations](/loom/regen_run_configs).

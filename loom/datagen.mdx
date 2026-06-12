@@ -1,0 +1,85 @@
+---
+sidebar_position: 8
+title: Forge Data Generators
+---
+
+# Forge Data Generators
+
+**NOTE:** This is **only** for Forge projects! Data Generators are still in development for Architectury projects. Fabric projects can follow Fabric Loom documentation.
+
+To make Data Generators work, we first need to add the src/generated folder to the resources classpath.
+
+We will first define where the generated folder is, so we can reuse it:
+
+```groovy
+def generatedResources = file("src/generated")
+```
+
+And, we will add it to the main source set, the one we use for launching Minecraft, so that our generated resources can be present in-game and the production artifacts:
+
+```groovy
+sourceSets {
+    main {
+        resources.srcDir generatedResources
+    }
+}
+```
+
+Then, we can add our data generator run configuration:
+
+```groovy
+loom {
+    runs {
+        data {
+            data()
+            programArgs "--all", "--mod", "<INSERT MOD ID HERE>"
+            programArgs "--output", generatedResources.absolutePath
+        }
+    }
+}
+```
+
+Refresh Gradle, and you are done!
+
+If you wish to add more arguments (like `--existing`), following is an example on how to add additional arguments:
+
+```groovy
+loom {
+    runs {
+        data {
+            programArgs "--existing", file("src/main/resources").absolutePath
+        }
+    }
+}
+```
+
+## Legacy dataGen() function
+
+**The legacy dataGen() block has been deprecated and may not function properly in future versions of Loom**
+
+The Loom DSL for Forge Data Generators was deprecated due to its low customisability and relatively ease of manually configuring it in the project’s build.gradle. The documentation
+below is included mostly as a historical reference.
+
+Data Generators Support has been added to Architectury Loom, starting from 0.6.55, this is how you declare it:
+
+```groovy
+loom {
+    dataGen {
+        mod "YOUR MODID HERE"
+    }
+}
+```
+
+Run `runData` or use your IDE's run configurations to generate the assets, should be the same as ForgeGradle.
+
+Architectury Loom automatically adds the following arguments: `--all --mod <the mod ids> --output <path to src/generated/resources>`, if you wish to add more (like `--existing`), following is an example on how to add additional arguments:
+
+```groovy
+loom {
+    launches {
+        data {
+            arg "--existing", file("src/main/resources").absolutePath
+        }
+    }
+}
+```

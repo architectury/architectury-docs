@@ -1,0 +1,48 @@
+---
+sidebar_position: 12
+title: architectury.common.json
+---
+
+# architectury.common.json
+
+architectury.common.json is a mod metadata format for common modules of cross-platform mods. These files can be placed at the top level of mod sources to provide some features -- interface injection and access wideners -- in development environments.
+
+## Structure
+
+See more details about the individual features in the sections below.
+
+* `accessWidener`: path to an access widener file
+* `injected_interfaces`: a map of injected interfaces (all type names in Intermediary mappings and JVM internal format)
+  * *type name*: an array of interface names injected to the type named in the key
+
+## Interface injection
+
+Compile-time interface injection is available in Architectury common modules by adding an `injected_interfaces` object to the architectury.common.json. The keys are the Minecraft class names in Intermediary mappings, and the values are the interfaces to inject as arrays.
+
+```json
+{
+  "injected_interfaces": {
+    "net/minecraft/class_1234": ["com/example/MyInterface"]
+  }
+}
+```
+
+All type names should be provided as JVM internal names (e.g. `com/example/Outer$Inner` instead of `com.example.Outer.Inner`).
+
+For more information, see the [Fabric Wiki page about interface injection](https://fabricmc.net/wiki/tutorial:interface_injection).
+
+## Access wideners
+
+An access widener file can be specified with the `accessWidener` key:
+
+```json
+{
+  "accessWidener": "my_mod.accesswidener"
+}
+```
+
+This is mainly useful for libraries that declare transitive access wideners, i.e. AWs that apply to projects that depend on the library.
+
+Access wideners should be written in your project's mappings (e.g. Yarn or Mojang mappings) as with Fabric projects.
+
+Further details on the access widener format can be found on the [Fabric Wiki page about access wideners](https://fabricmc.net/wiki/tutorial:accesswideners).

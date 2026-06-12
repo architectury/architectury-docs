@@ -1,0 +1,75 @@
+---
+sidebar_position: 3
+title: Using Libraries
+---
+
+# Using libraries
+
+External libraries can be used in mods built using Architectury Loom very much like in normal Gradle projects by adding them as Gradle dependencies.
+
+The exact setup, however, depends on the kind of library and the targetted mod loader.
+
+## Mods as libraries
+
+Mods can be used as libraries on any platform by using any of the [dependency configurations](/plugin/gradle_configurations) prefixed with `mod`, e.g. `modImplementation`.
+
+Loom automatically remaps the mods to the current mapping set used in the project if they use the modding platform's intermediate names -- this means SRG names on Forge, and [Intermediary names](https://github.com/FabricMC/intermediary) on other platforms (including Architectury common projects).
+
+Code example for depending on a mod such as Fabric API:
+
+```groovy
+dependencies {
+    // "modImplementation" remaps Fabric API to the project mapping set,
+    // but otherwise behaves the same as "implementation".
+    modImplementation "net.fabricmc.fabric-api:fabric-api:$project.fabric_api_version"
+}
+```
+
+## Non-mod libraries
+
+External libraries that are not mods can mostly be used exactly like in regular Gradle projects without Loom.
+
+```groovy
+// build.gradle
+dependencies {
+    // This example project requires Jankson both at compile time and
+    // at runtime, so we'll add it to "implementation".
+    implementation 'blue.endless:jankson:1.2.2'
+}
+```
+
+This has one exception: on Forge, you need to add all libraries available at runtime to `forgeRuntimeLibrary`. FML doesn't discover non-mod files by itself, so you have to manually add them to the bootstrap classpath.
+
+Code example for depending on non-mod libraries:
+
+```groovy
+// build.gradle of a Forge project
+dependencies {
+    // This example project requires Jankson both at compile time and
+    // at runtime. We'll add it to both "implementation" and
+    // "forgeRuntimeLibrary" to achieve that.
+    implementation 'blue.endless:jankson:1.2.2'
+    forgeRuntimeLibrary 'blue.endless:jankson:1.2.2'
+    
+    // We only need this library at compile time, so it is not added
+    // to "forgeRuntimeLibrary".
+    compileOnly 'com.example:some-other-library:1.0.0'
+}
+```
+
+## Nesting libraries inside mods
+
+On all platforms, libraries can be nested in the final mod jar using Loom's `include` feature, which supports both mods and other libraries.
+
+As an example, let's use the fictional project from above that requires Jankson. To include Jankson within the mod as a nested jar, you only need to use `include`:
+
+```groovy
+dependencies {
+    // This example project requires Jankson both at compile time and
+    // at runtime, so we'll add it to "implementation".
+    implementation 'blue.endless:jankson:1.2.2'
+
+    // We also want to ship Jankson inside our mod, so let's use "include" too.
+    include 'blue.endless:jankson:1.2.2'
+}
+```

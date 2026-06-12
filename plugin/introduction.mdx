@@ -1,0 +1,38 @@
+---
+sidebar_position: 1
+title: Introduction
+---
+
+# Architectury Plugin
+
+Architectury Plugin is a Gradle plugin to allow easier multi-modloader set-ups using a common module.
+
+## Things to know
+
+Same Limitations as Architectury Loom
+Read Me for things to know on using Architectury Loom.
+
+## Unstable + Issues
+
+Architectury Plugin is an experimental project, issues may arise, make sure you report them to the issue tracker.
+
+## Gradle Version Support
+
+Architectury Plugin supports Gradle 5.5.1 and up, with support for future versions of Gradle.
+
+## Things that are transformed
+
+`@Environment` and `EnvType` are remapped to `@OnlyIn` and `Dist`.
+`@ExpectPlatform` will be transformed to their platform-specific implementations (Read More)
+A fake forge mod will be generated for dev testing to make forge treat the common module as a mod
+Classes annotated with `@ForgeEvent` or `@ForgeEventCancellable` will extend forge's Event class on forge.
+
+## Access Transformer / Access Widener
+
+You can have an identical AT and AW for the common module, the fabric module and the forge module, or translate between ATs and AWs, or use mixin `@Invoker` and `@Accessor`.
+
+## Do not use vanilla Registry class for registering
+
+Forge disallows registering to the vanilla Registry class, you must defer your registrations to the RegistryEvent.Add.
+
+Additionally, Architectury API provides [an abstraction](/api/registries) for ForgeRegistries and vanilla's Registry for registering content.

@@ -1,0 +1,24 @@
+---
+sidebar_position: 2
+title: Using NeoForge
+---
+
+# Using NeoForge
+
+NeoForge support has been added into Architectury Loom 1.2+.
+
+See [the NeoForge migration guide](/loom/neoforge_migration) for using NeoForge with Minecraft 1.20.2+.
+
+### Instructions (Minecraft 1.20.1)
+
+1. Replace the forge code in the build.gradle dependencies block:
+
+```groovy
+forge "net.neoforged:forge:VERSION"
+```
+
+2. Add the NeoForge repository in the build.gradle repositories block and settings.gradle repositories block:
+
+```groovy
+maven { url "https://maven.neoforged.net/releases/" }
+```
