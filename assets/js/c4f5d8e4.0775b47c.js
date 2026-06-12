@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkarch_docs=self.webpackChunkarch_docs||[]).push([["4823"],{7176(r,a,c){c.r(a),c.d(a,{default:()=>u});var s=c(4848);c(6540);var e=c(6347);function u(){return(0,s.jsx)(e.rd,{to:"/api"})}}}]);
