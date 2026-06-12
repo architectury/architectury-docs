@@ -1,0 +1,73 @@
+---
+sidebar_position: 2
+title: Registrar & RegistrarManager
+---
+
+# Registrar & RegistrarManager
+
+For most mods, [`DeferredRegister`](./deferred-register.mdx) is all you need. Reach for these two
+types when you want to **read** from a registry, or **create your own** registry.
+
+## RegistrarManager
+
+`dev.architectury.registry.registries.RegistrarManager`
+
+A `RegistrarManager` is the per-mod entry point to registries. Get one with your mod id:
+
+```java
+RegistrarManager registries = RegistrarManager.get(MyMod.MOD_ID);
+```
+
+From it you can grab a `Registrar` for any registry by its key:
+
+```java
+Registrar<Item> items = registries.get(Registries.ITEM);
+```
+
+## Registrar
+
+`dev.architectury.registry.registries.Registrar`
+
+A `Registrar<T>` is a cross-platform wrapper around a single Minecraft registry. It's
+`Iterable<T>` and lets you look entries up by id or raw id, and register directly.
+
+| Method | Description |
+|---|---|
+| `get(Identifier)` | The entry for an id, or `null`. |
+| `getId(T)` | The id of an entry, or `null`. |
+| `getKey(T)` | The `ResourceKey` of an entry. |
+| `getRawId(T)` / `byRawId(int)` | Convert between an entry and its integer id. |
+| `contains(Identifier)` / `containsValue(T)` | Membership checks. |
+| `getIds()` / `entrySet()` | All ids / all entries. |
+| `register(Identifier, Supplier<E>)` | Register an entry directly, returning a `RegistrySupplier`. |
+| `listen(Identifier, Consumer<T>)` | Run a callback when a specific entry is registered. |
+
+```java
+Registrar<Item> items = RegistrarManager.get(MyMod.MOD_ID).get(Registries.ITEM);
+
+Item dirt = items.get(Identifier.withDefaultNamespace("dirt"));
+Identifier id = items.getId(Items.DIAMOND); // minecraft:diamond
+```
+
+## Creating your own registry
+
+Use `RegistrarManager.builder(...)` to create a brand-new registry for your own object type.
+Call it with **no** trailing argument - the element type is inferred from the variable:
+
+```java
+public static final Registrar<MySpell> SPELLS =
+    RegistrarManager.get(MyMod.MOD_ID)
+        .<MySpell>builder(Identifier.fromNamespaceAndPath(MyMod.MOD_ID, "spells"))
+        .syncToClients() // optional: sync the registry's ids to clients
+        .build();
+```
+
+Then register into it like any other `Registrar`:
+
+```java
+public static final RegistrySupplier<MySpell> FIREBALL =
+    SPELLS.register(Identifier.fromNamespaceAndPath(MyMod.MOD_ID, "fireball"), () -> new MySpell(...));
+```
+
+`syncToClients()` is the built-in builder option; it makes the registry's ids synchronize to
+connected clients, which is important if clients need to agree on the raw ids.

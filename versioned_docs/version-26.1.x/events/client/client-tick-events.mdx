@@ -1,0 +1,32 @@
+---
+sidebar_position: 2
+title: Client Tick Events
+---
+
+# Client Tick Events
+
+`dev.architectury.event.events.client.ClientTickEvent`
+
+Fires every client tick, with a **PRE** and **POST** variant for each. All are client-only
+notifications.
+
+## Events
+
+| Event | Listener receives | When |
+|---|---|---|
+| `CLIENT_PRE` / `CLIENT_POST` | `Minecraft` | Around each client tick. |
+| `CLIENT_LEVEL_PRE` / `CLIENT_LEVEL_POST` | `ClientLevel` | Around each client level tick. |
+
+Each listener implements `tick(instance)`.
+
+## Example
+
+```java
+ClientTickEvent.CLIENT_POST.register(minecraft -> {
+    // runs every client tick
+});
+```
+
+:::warning[Keep tick listeners cheap]
+Client ticks run ~20 times per second; avoid heavy work inside them.
+:::

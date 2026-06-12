@@ -1,0 +1,100 @@
+---
+sidebar_position: 2
+title: Sending & Receiving
+---
+
+# Sending & Receiving
+
+With a [payload defined](./defining-packets.mdx), use `dev.architectury.networking.NetworkManager`
+to register a receiver and send it. Packets travel in one of two directions, given by
+`NetworkManager.Side`:
+
+- **`C2S`** - client to server.
+- **`S2C`** - server to client.
+
+## Client → Server (C2S)
+
+Register the receiver on the **server**, then send from the **client**.
+
+```java
+// Server-side registration (your common initializer is fine):
+NetworkManager.registerReceiver(NetworkManager.Side.C2S,
+    OpenGuiPayload.TYPE, OpenGuiPayload.CODEC,
+    (payload, context) -> {
+        ServerPlayer player = (ServerPlayer) context.getPlayer();
+        context.queue(() -> {
+            // safe to touch game state here - see the threading note below
+        });
+    });
+```
+
+```java
+// Client-side: send it
+NetworkManager.sendToServer(new OpenGuiPayload(pos));
+```
+
+## Server → Client (S2C)
+
+Declare the payload type on the **server**, register the receiver on the **client**, then send
+from the **server**.
+
+```java
+// Server-side: declare the type
+NetworkManager.registerS2CPayloadType(SyncStatsPayload.TYPE, SyncStatsPayload.CODEC);
+```
+
+```java
+// Client-side: register the receiver
+NetworkManager.registerReceiver(NetworkManager.Side.S2C,
+    SyncStatsPayload.TYPE, SyncStatsPayload.CODEC,
+    (payload, context) -> context.queue(() -> {
+        // update client-side state
+    }));
+```
+
+```java
+// Server-side: send to one or many players
+NetworkManager.sendToPlayer(serverPlayer, new SyncStatsPayload(10, 4.5f));
+NetworkManager.sendToPlayers(serverLevel.players(), new SyncStatsPayload(10, 4.5f));
+```
+
+## The receiver and its context
+
+A receiver is a `NetworkManager.NetworkReceiver<T>` - `(payload, context)`. The `PacketContext`
+gives you:
+
+| Member | Description |
+|---|---|
+| `getPlayer()` | The player on this side (the sender on the server; the local player on the client). |
+| `queue(Runnable)` | Run something on the main game thread. |
+| `getEnvironment()` | `Env.CLIENT` or `Env.SERVER`. |
+| `registryAccess()` | The `RegistryAccess` for this side. |
+
+:::warning[Run game logic on the main thread]
+Receivers are invoked on the network thread. Reading the payload is fine there, but anything that
+touches world or game state must be wrapped in `context.queue(() -> ...)` so it runs on the main
+thread.
+:::
+
+## Checking whether the other side can receive
+
+Before sending, you can check that the recipient has your packet registered (for example, a
+vanilla client connecting to your server):
+
+```java
+if (NetworkManager.canPlayerReceive(player, SyncStatsPayload.TYPE)) {
+    NetworkManager.sendToPlayer(player, new SyncStatsPayload(10, 4.5f));
+}
+
+// And from the client, before a C2S send:
+if (NetworkManager.canServerReceive(OpenGuiPayload.TYPE)) {
+    NetworkManager.sendToServer(new OpenGuiPayload(pos));
+}
+```
+
+## Converting to a vanilla packet
+
+`NetworkManager.toPacket(side, payload, registryAccess)` builds a vanilla `Packet` from your
+payload (and `toPackets(...)` returns a list when transformers split it). This is useful when an
+API expects a raw `Packet` - for instance, custom entity spawning, covered in
+[Entity Spawn Packets](./entity-spawn-packets.mdx).

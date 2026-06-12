@@ -1,0 +1,43 @@
+---
+sidebar_position: 4
+title: Block Events
+---
+
+# Block Events
+
+`dev.architectury.event.events.common.BlockEvent`
+
+Events about blocks being broken, placed, or landed on by a falling block.
+
+## Events
+
+| Event | Listener method | Returns |
+|---|---|---|
+| `BREAK` | `breakBlock(Level, BlockPos, BlockState, ServerPlayer, IntValue xp)` | `EventResult` - interrupt to cancel the break. |
+| `PLACE` | `placeBlock(Level, BlockPos, BlockState, Entity placer)` | `EventResult` - interrupt to cancel the placement. |
+| `FALLING_LAND` | `onLand(Level, BlockPos, BlockState fallState, BlockState landOn, FallingBlockEntity)` | `void` (notification). |
+
+For `BREAK`, the `xp` parameter is an `IntValue` (a mutable int wrapper) you can read and modify
+to change the dropped experience. It is always `null` on Fabric. For `PLACE`, the `placer` may be
+`null` (for example, when a dispenser places the block).
+
+## Examples
+
+Protect bedrock from being broken:
+
+```java
+BlockEvent.BREAK.register((level, pos, state, player, xp) -> {
+    if (state.is(Blocks.BEDROCK)) {
+        return EventResult.interruptFalse(); // deny the break
+    }
+    return EventResult.pass();
+});
+```
+
+React to a falling block landing:
+
+```java
+BlockEvent.FALLING_LAND.register((level, pos, fallState, landOn, entity) -> {
+    // e.g. spawn particles where the block landed
+});
+```

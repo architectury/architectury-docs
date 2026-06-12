@@ -1,0 +1,10 @@
+{
+  "label": "Platform & Environment",
+  "position": 7,
+  "link": {
+    "type": "generated-index",
+    "slug": "/platform",
+    "title": "Platform & Environment",
+    "description": "Detect the loader, read mod metadata, find game folders, and run code conditionally on the client or server - all without writing loader-specific code."
+  }
+}

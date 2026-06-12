@@ -1,0 +1,28 @@
+---
+sidebar_position: 12
+title: Lightning Events
+---
+
+# Lightning Events
+
+`dev.architectury.event.events.common.LightningEvent`
+
+Hook into lightning strikes.
+
+## Events
+
+| Event | Listener method | When |
+|---|---|---|
+| `STRIKE` | `onStrike(LightningBolt bolt, Level, Vec3 pos, List<Entity> toStrike)` | After the bolt has gathered the entities it will affect. |
+
+`STRIKE` is a notification. The `toStrike` list contains every entity the lightning affects, so
+you can inspect or modify it.
+
+## Example
+
+```java
+LightningEvent.STRIKE.register((bolt, level, pos, toStrike) -> {
+    // e.g. stop the lightning from hitting tamed animals
+    toStrike.removeIf(entity -> entity instanceof TamableAnimal animal && animal.isTame());
+});
+```

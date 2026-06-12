@@ -1,0 +1,38 @@
+---
+sidebar_position: 10
+title: Loot Events
+---
+
+# Loot Events
+
+`dev.architectury.event.events.common.LootEvent`
+
+Modify loot tables as they load, adding extra drops without replacing the whole table.
+
+## Events
+
+| Event | Listener method |
+|---|---|
+| `MODIFY_LOOT_TABLE` | `modifyLootTable(ResourceKey<LootTable> key, LootTableModificationContext context, boolean builtin)` |
+
+Use `context.addPool(LootPool.Builder)` to add a pool to the table.
+
+The `builtin` flag tells you where the table came from: `true` means it's built in to vanilla or
+a mod; `false` means it's from a user data pack. A common pattern is to only modify built-in
+tables, so user data packs can fully override them.
+
+:::note
+On NeoForge this event only runs for **built-in** loot tables.
+:::
+
+## Example: add diamonds to the dirt loot table
+
+```java
+LootEvent.MODIFY_LOOT_TABLE.register((key, context, builtin) -> {
+    if (builtin && Blocks.DIRT.getLootTable().equals(Optional.ofNullable(key))) {
+        LootPool.Builder pool = LootPool.lootPool()
+            .add(LootItem.lootTableItem(Items.DIAMOND));
+        context.addPool(pool);
+    }
+});
+```

@@ -1,0 +1,10 @@
+{
+  "label": "Common Registries",
+  "position": 1,
+  "link": {
+    "type": "generated-index",
+    "slug": "/common-registries",
+    "title": "Common Registries",
+    "description": "Register your blocks, items, entities, and other content once and have it work on both Fabric and NeoForge. Start with DeferredRegister, then reach for the specialized registries for creative tabs, menus, biomes, fuel, and more."
+  }
+}

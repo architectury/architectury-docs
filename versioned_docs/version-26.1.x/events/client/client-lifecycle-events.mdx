@@ -1,0 +1,32 @@
+---
+sidebar_position: 1
+title: Client Lifecycle Events
+---
+
+# Client Lifecycle Events
+
+`dev.architectury.event.events.client.ClientLifecycleEvent`
+
+Fires as the **client** starts, stops, and loads levels.
+
+:::warning[Client-only]
+Every event on this page fires only on the physical client. Register them from client-side code,
+not from your common initializer.
+:::
+
+## Events
+
+| Event | Listener receives | When |
+|---|---|---|
+| `CLIENT_STARTED` | `Minecraft` | The client has initialized. |
+| `CLIENT_STOPPING` | `Minecraft` | The client is shutting down. |
+| `CLIENT_LEVEL_LOAD` | `ClientLevel` | A level was loaded on the client. |
+| `CLIENT_SETUP` | `Minecraft` | Client setup has begun. Registries should be populated by now. |
+
+## Example
+
+```java
+ClientLifecycleEvent.CLIENT_STARTED.register(minecraft -> {
+    // the client is ready
+});
+```

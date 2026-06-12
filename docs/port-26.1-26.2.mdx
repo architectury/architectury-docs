@@ -1,0 +1,36 @@
+---
+sidebar_position: 10
+title: Porting from 26.1 to 26.2
+---
+
+# Porting from 26.1 to 26.2
+
+This page is a guide for modders who want to port their mod from Architectury API 20 to 21.
+It covers the breaking changes and new features introduced in Architectury 21 for Minecraft 26.2.
+
+## Changes
+- `ArchitecturyFluidAttributes`
+    - `getSourceTexture(FluidStack)` -> `getSourceTexture(FluidState)`
+    - `getFlowingTexture(FluidStack)` -> `getFlowingTexture(FluidState)`
+    - `getColor(FluidStack)` -> `getColor(FluidState)`
+
+
+## Removal
+- `Platform`
+    - `isForgeLike()`
+        - Use `Platform.isNeoForge()`
+- `FluidStackHooks`
+    - `getLuminosity(Fluid, Level, BlockPos)`
+        - Use the vanilla `fluid.getFluidType().getLightLevel()` instead.
+- `MenuRegistry`
+    - `SimpleMenuTypeFactory`
+    - `of(SimpleMenuTypeFactory<T>)`
+        - Use the menu constructor directly instead.
+- `ArchitecturyFluidAttributes`
+    - `getSourceTexture(FluidStack, BlockAndLightGetter, BlockPos)`
+        - Use and override `getSourceTexture(FluidState, BlockAndLightGetter, BlockPos)` instead.
+    - `getFlowingTexture(FluidStack, BlockAndLightGetter, BlockPos)`
+        - Use and override `getFlowingTexture(FluidState, BlockAndLightGetter, BlockPos)` instead.
+    - `getColor(FluidStack, BlockAndLightGetter, BlockPos)`
+        - Use and override `getColor(FluidState, BlockAndLightGetter, BlockPos)` instead.
+    

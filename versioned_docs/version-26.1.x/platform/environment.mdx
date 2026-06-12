@@ -1,0 +1,65 @@
+---
+sidebar_position: 3
+title: Environment & Side-Specific Code
+---
+
+# Environment & Side-Specific Code
+
+Some code only makes sense on one side - rendering and input on the **client**, for example.
+Architectury gives you a platform-agnostic environment enum and a helper to run code on the
+correct side.
+
+## Env
+
+`dev.architectury.utils.Env`
+
+A simple enum with two values: `CLIENT` and `SERVER`. It's the cross-platform stand-in for
+Fabric's `EnvType` and NeoForge's `Dist`.
+
+```java
+if (Platform.getEnvironment() == Env.CLIENT) {
+    // physical client
+}
+```
+
+You can convert to/from the platform enum with `env.toPlatform()` and `Env.fromPlatform(type)`.
+
+## EnvExecutor
+
+`dev.architectury.utils.EnvExecutor`
+
+`EnvExecutor` runs code only on a given side. Crucially, it takes a **supplier of** the code, so
+the code (and any classes it references) is only loaded when you're actually on that side.
+
+```java
+// Run client-only setup, only on the client:
+EnvExecutor.runInEnv(Env.CLIENT, () -> ClientInit::init);
+```
+
+:::tip[Nested lambda requirement]
+`runInEnv` takes a `Supplier<Runnable>`. The outer supplier (`() -> ClientInit::init`) is only
+invoked on the matching side, so a class like `ClientInit` - which may touch client-only Minecraft
+classes - is **never loaded on the server**. Returning the `Runnable` directly would load that
+class everywhere and crash the dedicated server. Always wrap side-only code this way.
+:::
+
+### Returning a value
+
+`getInEnv` is the same idea but returns an `Optional<T>` (empty on the other side):
+
+```java
+Optional<Screen> screen = EnvExecutor.getInEnv(Env.CLIENT, () -> () -> new MyScreen());
+```
+
+### Picking per side
+
+`getEnvSpecific` returns a value computed differently on each side:
+
+```java
+String sideName = EnvExecutor.getEnvSpecific(
+    () -> () -> "client",   // evaluated on the client
+    () -> () -> "server"    // evaluated on the server
+);
+```
+
+All three methods also have overloads taking the platform `EnvType` instead of `Env`.

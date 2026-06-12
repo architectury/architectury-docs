@@ -1,0 +1,60 @@
+---
+sidebar_position: 8
+title: Command Events
+---
+
+# Command Events
+
+Two classes cover commands: one for **registering** them and one that fires whenever a command
+is **performed**.
+
+## Registering commands
+
+`dev.architectury.event.events.common.CommandRegistrationEvent`
+
+| Event | Listener method |
+|---|---|
+| `EVENT` | `register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext registry, Commands.CommandSelection selection)` |
+
+Fires after the server registers its commands. Add your commands to the provided Brigadier
+`dispatcher`.
+
+```java
+CommandRegistrationEvent.EVENT.register((dispatcher, registry, selection) -> {
+    dispatcher.register(Commands.literal("greet")
+        .executes(context -> {
+            context.getSource().sendSuccess(() -> Component.literal("Hello!"), false);
+            return 1;
+        }));
+});
+```
+
+:::note
+For commands that should only exist on the client, see
+[Client Command Events](../client/client-command-events.mdx).
+:::
+
+## Reacting to a command being run
+
+`dev.architectury.event.events.common.CommandPerformEvent`
+
+| Event | Listener receives | Returns |
+|---|---|---|
+| `EVENT` | a `CommandPerformEvent` object | `EventResult` |
+
+This event is an *actor*: your listener receives the event object and returns an
+[`EventResult`](../../events/event-results.mdx). Interrupt the result to mark the command as
+failed. You can also inspect or replace the parsed results, or supply a `Throwable` describing a
+failure.
+
+The event object exposes:
+
+- `getResults()` / `setResults(ParseResults<CommandSourceStack>)`
+- `getThrowable()` / `setThrowable(Throwable)`
+
+```java
+CommandPerformEvent.EVENT.register(event -> {
+    // inspect event.getResults(); optionally event.setThrowable(...) to fail it
+    return EventResult.pass();
+});
+```

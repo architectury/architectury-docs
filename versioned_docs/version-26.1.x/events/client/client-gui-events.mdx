@@ -1,0 +1,50 @@
+---
+sidebar_position: 4
+title: Client GUI Events
+---
+
+# Client GUI Events
+
+`dev.architectury.event.events.client.ClientGuiEvent`
+
+Hooks for rendering the in-game HUD and for initializing, rendering, and replacing screens.
+
+## Events
+
+| Event | Listener method | Returns |
+|---|---|---|
+| `RENDER_HUD` | `renderHud(GuiGraphicsExtractor graphics, DeltaTracker)` | `void` - draw on top of the in-game HUD. |
+| `INIT_PRE` | `init(Screen, ScreenAccess)` | `EventResult` - interrupt to cancel vanilla init. |
+| `INIT_POST` | `init(Screen, ScreenAccess)` | `void` - after a screen initialized. |
+| `RENDER_PRE` | `render(Screen, GuiGraphicsExtractor, int mouseX, int mouseY, float delta)` | `EventResult` - interrupt to cancel vanilla render. |
+| `RENDER_POST` | `render(Screen, GuiGraphicsExtractor, int mouseX, int mouseY, float delta)` | `void` - after a screen rendered. |
+| `RENDER_CONTAINER_BACKGROUND` | `render(AbstractContainerScreen, GuiGraphicsExtractor, int, int, float)` | `void` |
+| `RENDER_CONTAINER_FOREGROUND` | `render(AbstractContainerScreen, GuiGraphicsExtractor, int, int, float)` | `void` |
+| `SET_SCREEN` | `modifyScreen(Screen)` | `CompoundEventResult<Screen>` - replace the screen about to open. |
+
+The render events give you a `GuiGraphicsExtractor` - the drawing context, with methods like
+`pose()`, `fill(...)`, and `text(font, component, x, y, color)`. The `ScreenAccess` passed to the
+`INIT` events lets you add or remove widgets on the screen - see
+[Screen Hooks](../../hooks/screen-hooks.mdx).
+
+## Examples
+
+Draw something over the HUD:
+
+```java
+ClientGuiEvent.RENDER_HUD.register((graphics, deltaTracker) -> {
+    Font font = Minecraft.getInstance().font;
+    graphics.text(font, Component.literal("Hello HUD"), 4, 4, 0xFFFFFFFF);
+});
+```
+
+Swap one screen for your own when it would open:
+
+```java
+ClientGuiEvent.SET_SCREEN.register(screen -> {
+    if (screen instanceof PauseScreen) {
+        return CompoundEventResult.interruptTrue(new MyCustomScreen());
+    }
+    return CompoundEventResult.pass();
+});
+```

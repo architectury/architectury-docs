@@ -1,0 +1,44 @@
+---
+sidebar_position: 7
+title: Client Screen Input Events
+---
+
+# Client Screen Input Events
+
+`dev.architectury.event.events.client.ClientScreenInputEvent`
+
+Mouse and keyboard input directed at an **open screen** (a GUI). Unlike
+[raw input](./client-raw-input-events.mdx), these include the `Screen` and run in two phases:
+
+- **`_PRE`** - before the screen processes the input.
+- **`_POST`** - after the screen processes it.
+
+Every event returns an [`EventResult`](../../events/event-results.mdx); interrupt it to consume
+the input.
+
+## Events
+
+Each row below exists as both a `_PRE` and a `_POST` constant (for example `MOUSE_CLICKED_PRE`
+and `MOUSE_CLICKED_POST`).
+
+| Event pair | Listener method |
+|---|---|
+| `MOUSE_CLICKED_*` | `mouseClicked(Minecraft, Screen, MouseButtonEvent, boolean doubleClick)` |
+| `MOUSE_RELEASED_*` | `mouseReleased(Minecraft, Screen, MouseButtonEvent)` |
+| `MOUSE_DRAGGED_*` | `mouseDragged(Minecraft, Screen, MouseButtonEvent, double mouseX2, double mouseY2)` |
+| `MOUSE_SCROLLED_*` | `mouseScrolled(Minecraft, Screen, double mouseX, double mouseY, double amountX, double amountY)` |
+| `KEY_PRESSED_*` | `keyPressed(Minecraft, Screen, KeyEvent)` |
+| `KEY_RELEASED_*` | `keyReleased(Minecraft, Screen, KeyEvent)` |
+| `CHAR_TYPED_*` | `charTyped(Minecraft, Screen, CharacterEvent)` |
+
+## Example
+
+```java
+ClientScreenInputEvent.KEY_PRESSED_PRE.register((client, screen, keyEvent) -> {
+    if (screen instanceof MyScreen) {
+        // handle the key before the screen sees it
+        return EventResult.interruptFalse(); // consume it
+    }
+    return EventResult.pass();
+});
+```

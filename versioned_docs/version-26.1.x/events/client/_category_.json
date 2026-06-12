@@ -1,0 +1,10 @@
+{
+  "label": "Client Events",
+  "position": 5,
+  "link": {
+    "type": "generated-index",
+    "slug": "/events/client",
+    "title": "Client Events",
+    "description": "Events that only fire on the physical client - rendering, input, GUIs, and client-side lifecycle. Only register these in client-only code."
+  }
+}

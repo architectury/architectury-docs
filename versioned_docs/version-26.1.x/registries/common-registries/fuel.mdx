@@ -1,0 +1,32 @@
+---
+sidebar_position: 7
+title: Fuel
+---
+
+# Fuel
+
+`dev.architectury.registry.fuel.FuelRegistry`
+
+Make items usable as furnace fuel, or change the burn time of existing items.
+
+## Registering a burn time
+
+```java
+// Make ruby burn for 200 ticks (the same as a plank):
+FuelRegistry.register(200, MyMod.RUBY.get());
+
+// You can pass several items at once:
+FuelRegistry.register(1600, MyMod.COAL_CHUNK.get(), MyMod.CHARCOAL_CHUNK.get());
+```
+
+The first argument is the burn time in ticks. Two values are special:
+
+- `0` - mark the item as **not** a fuel.
+- `-1` - fall back to vanilla logic for that item.
+
+Call this from your common initializer.
+
+## Reading a burn time
+
+`FuelRegistry.get(ItemStack stack, RecipeType<?> recipeType, FuelValues fuelValues)` returns the
+burn time of a stack (or `0` if it isn't a fuel), taking registered overrides into account.

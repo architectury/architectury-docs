@@ -1,0 +1,33 @@
+---
+sidebar_position: 7
+title: Chunk Events
+---
+
+# Chunk Events
+
+`dev.architectury.event.events.common.ChunkEvent`
+
+Fires when a chunk's data is saved or loaded, letting you attach and read your own persistent
+data. Both are notifications.
+
+## Events
+
+| Event | Listener method | When |
+|---|---|---|
+| `SAVE_DATA` | `save(ChunkAccess, ServerLevel, SerializableChunkData)` | Just before a chunk's data is written. |
+| `LOAD_DATA` | `load(ChunkAccess, ServerLevel, SerializableChunkData)` | Just before a chunk's data is read. |
+
+On `SAVE_DATA`, write your own values into the provided data so they're persisted alongside the
+chunk; on `LOAD_DATA`, read them back. The `ServerLevel` passed to `load` may be `null`.
+
+## Example
+
+```java
+ChunkEvent.SAVE_DATA.register((chunk, level, data) -> {
+    // store your mod's per-chunk data into `data`
+});
+
+ChunkEvent.LOAD_DATA.register((chunk, level, data) -> {
+    // read your mod's per-chunk data back from `data`
+});
+```

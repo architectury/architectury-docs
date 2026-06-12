@@ -1,0 +1,26 @@
+---
+sidebar_position: 3
+title: Client Player Events
+---
+
+# Client Player Events
+
+`dev.architectury.event.events.client.ClientPlayerEvent`
+
+Client-side events about the local player joining, leaving, and respawning.
+
+## Events
+
+| Event | Listener method | When |
+|---|---|---|
+| `CLIENT_PLAYER_JOIN` | `join(LocalPlayer)` | The local player joined a level. |
+| `CLIENT_PLAYER_QUIT` | `quit(LocalPlayer)` | The local player left a level (the player may be `null`). |
+| `CLIENT_PLAYER_RESPAWN` | `respawn(LocalPlayer oldPlayer, LocalPlayer newPlayer)` | The client received a respawn for the local player. |
+
+## Example
+
+```java
+ClientPlayerEvent.CLIENT_PLAYER_JOIN.register(player -> {
+    // the local player entered a world
+});
+```

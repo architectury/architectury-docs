@@ -1,0 +1,91 @@
+---
+sidebar_position: 3
+title: Creating Your Own Events
+---
+
+# Creating Your Own Events
+
+Beyond the events the API ships with, you can define your **own** events with
+`dev.architectury.event.EventFactory`. This is handy for letting other mods (or other parts of
+your own mod) hook into things your mod does.
+
+## The pattern
+
+An event is just a listener interface plus a `public static final Event<T>` constant created by
+`EventFactory`:
+
+```java
+public interface ManaChangedEvent {
+    Event<ManaChangedEvent> EVENT = EventFactory.createLoop();
+
+    void onManaChanged(Player player, int oldMana, int newMana);
+}
+```
+
+Fire it by calling the listener method on the event's `invoker()`:
+
+```java
+ManaChangedEvent.EVENT.invoker().onManaChanged(player, oldMana, newMana);
+```
+
+Anyone can now subscribe exactly like they would to a built-in event:
+
+```java
+ManaChangedEvent.EVENT.register((player, oldMana, newMana) -> {
+    // react to the change
+});
+```
+
+## Choosing a factory method
+
+`EventFactory` offers several creation strategies. Which one you pick determines how listener
+return values are combined.
+
+| Method | Listener returns | Dispatch behavior |
+|---|---|---|
+| `createLoop()` | `void` | Calls every listener. Pure notification, nothing can cancel. |
+| `createEventResult()` | [`EventResult`](./event-results.mdx) | Calls listeners until one interrupts; returns that result, else `pass()`. |
+| `createCompoundEventResult()` | [`CompoundEventResult<T>`](./event-results.mdx) | Like `createEventResult`, but carries extra data. |
+| `createInteractionResult()` | `InteractionResult` | Calls listeners until one returns a non-`PASS` vanilla `InteractionResult`. |
+| `createConsumerLoop()` | (listeners are `Consumer<T>`) | A loop whose listener type is `Consumer<T>`. |
+| `createEventActorLoop()` | `EventActor<T>` returning `EventResult` | A loop of actors that can interrupt via `EventResult`. |
+
+There is also `EventFactory.of(Function<List<T>, T>)` if you need a fully custom strategy for
+combining listeners - the higher-level methods above are built on top of it.
+
+:::warning[Call the factory methods with no arguments]
+The `create*` methods infer the listener type from the variable you assign to, so call them
+**empty**:
+
+```java
+Event<ManaChangedEvent> EVENT = EventFactory.createLoop();        // correct
+Event<ManaChangedEvent> EVENT = EventFactory.createLoop(myThing); // throws at startup
+```
+
+If you'd rather be explicit, each method also has an overload that takes the listener
+`Class<T>` directly.
+:::
+
+## Example: a cancellable event
+
+Use `createEventResult()` when listeners should be able to cancel or override the outcome:
+
+```java
+public interface SpellCastEvent {
+    Event<SpellCastEvent> EVENT = EventFactory.createEventResult();
+
+    EventResult onCast(Player player, Spell spell);
+}
+```
+
+```java
+// Firing it - respect a listener that cancelled the cast.
+EventResult result = SpellCastEvent.EVENT.invoker().onCast(player, spell);
+if (result.isFalse()) {
+    return; // a listener denied the cast
+}
+// ...otherwise proceed
+```
+
+See [Event Results](./event-results.mdx) for the full set of result values and how interruption
+works.
