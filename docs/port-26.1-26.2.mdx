@@ -8,11 +8,16 @@ title: Porting from 26.1 to 26.2
 This page is a guide for modders who want to port their mod from Architectury API 20 to 21.
 It covers the breaking changes and new features introduced in Architectury 21 for Minecraft 26.2.
 
-## Changes
+## Breaking Changes
 - `ArchitecturyFluidAttributes`
     - `getSourceTexture(FluidStack)` -> `getSourceTexture(FluidState)`
     - `getFlowingTexture(FluidStack)` -> `getFlowingTexture(FluidState)`
     - `getColor(FluidStack)` -> `getColor(FluidState)`
+- `RegistrySupplier<T>` no longer extends `Holder<T>`
+    - Use `asHolder()` to get a `Holder<T>` from a `RegistrySupplier<T>` instance instead.
+- `DeferredRegister<T>`
+    - `getHolder()` -> `asHolder()`
+
 
 
 ## Removal
@@ -33,4 +38,5 @@ It covers the breaking changes and new features introduced in Architectury 21 fo
         - Use and override `getFlowingTexture(FluidState, BlockAndLightGetter, BlockPos)` instead.
     - `getColor(FluidStack, BlockAndLightGetter, BlockPos)`
         - Use and override `getColor(FluidState, BlockAndLightGetter, BlockPos)` instead.
+- `RegistrySupplierImpl`
     
