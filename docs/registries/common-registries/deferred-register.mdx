@@ -92,7 +92,7 @@ Calling `register()` more than once on the same `DeferredRegister` throws. Call 
 `dev.architectury.registry.registries.RegistrySupplier`
 
 Each `register(...)` call returns a `RegistrySupplier<T>`. It's a lazy reference to your
-registered object - it implements both `Supplier<T>` and the vanilla `Holder<T>`, so you can use
+registered object - it implements `Supplier<T>`, so you can use
 it almost anywhere either is expected.
 
 | Method | Description |
@@ -102,6 +102,7 @@ it almost anywhere either is expected.
 | `getId()` | The entry's `Identifier`. |
 | `getKey()` | The entry's `ResourceKey<T>`. |
 | `listen(Consumer<T>)` | Runs a callback once the entry is registered (or immediately if it already is). |
+| `asHolder()` | Return the object wrapped as a `Holder<T>`. |
 
 ```java
 // Use the supplier wherever you need the object:
@@ -112,11 +113,6 @@ MyMod.RUBY.listen(item -> {
     // ...
 });
 ```
-
-:::tip
-Because `RegistrySupplier` is also a `Holder`, you can pass it directly to APIs that expect a
-`Holder<T>` without calling `get()` yourself.
-:::
 
 ## Iterating entries
 
