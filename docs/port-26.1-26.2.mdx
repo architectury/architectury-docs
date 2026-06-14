@@ -8,6 +8,32 @@ title: Porting from 26.1 to 26.2
 This page is a guide for modders who want to port their mod from Architectury API 20 to 21.
 It covers the breaking changes and new features introduced in Architectury 21 for Minecraft 26.2.
 
+## Changes to NeoForge package names
+To keep compatibility, the NeoForge specific code had the same structure and the same package names as the forge specific code.
+With the removal of forge support, the NeoForge specific code is now the only code, and the package names have been changed to reflect that.
+You'll need to change your imports.
+For example: `dev.architectury.core.block.forge` -> `dev.architectury.core.block.neoforge`.
+
+## Additions
+- `Registrar`
+    - `asVanillaRegistry()` to access the underlying `net.minecraft.core.Registry<T>`.
+- `EntityDataSerializerRegistry`
+    - You can now register `EntityDataSerializer`s with `EntityDataSerializerRegistry.register(Identifier, EntityDataSerializer<T>)` in the common package of your mod.
+- `Event<T>`
+    - `register(EventPriority, T)` to register an event listener at a given priority. Listeners with a higher priority are invoked first. Listeners sharing the same priority keep their registration order. The existing `register(T)` now defaults to `EventPriority.NORMAL`.
+- `EventPriority`
+    - New enum (`HIGHEST`, `HIGH`, `NORMAL`, `LOW`, `LOWEST`) used to order event listeners.
+- `EventResult`
+    - `fromMinecraft(InteractionResult)` to create an `EventResult` from a vanilla `InteractionResult`.
+- `CompoundEventResult`
+    - `asMinecraft()` to get the vanilla `InteractionResult` version of `EventResult`.
+
+## Deprecations
+- `EventFactory`
+    - `createInteractionResult(...)`
+        - Use `createEventResult(...)` with `EventResult` instead.
+          - An `EventResult` can now represent any vanilla `InteractionResult` via `EventResult.fromMinecraft(InteractionResult)` and `EventResult#asMinecraft()`.
+        - Will be removed in a future version.
 
 ## Breaking Changes
 - `ArchitecturyFluidAttributes`
@@ -18,7 +44,18 @@ It covers the breaking changes and new features introduced in Architectury 21 fo
     - Use `asHolder()` to get a `Holder<T>` version of the `RegistrySupplier<T>` instance instead.
 - `DeferredRegister<T>`
     - `getHolder()` -> `asHolder()`
-
+- `BlockEvent.Break`
+    - `breakBlock(Level, BlockPos, BlockState, ServerPlayer, IntValue)` -> `breakBlock(Level, BlockPos, BlockState, ServerPlayer)`
+        - The `xp` parameter was always `null` on both NeoForge and Fabric (neither platform's break event exposes it) and has been removed.
+- A few interaction events now return `EventResult` instead of vanilla `InteractionResult`.
+    - `InteractionEvent`
+      - `LeftClickBlock#click`
+      - `RightClickBlock#click`
+      - `RightClickItem#click`
+      - `FarmlandTrample#trample`
+    - `PlayerEvent`
+      - `FillBucket#fill`
+    - Use `EventResult#asMinecraft()` to get the vanilla `InteractionResult` version of the `EventResult` returned by these events.
 
 
 ## Removal
