@@ -46,7 +46,7 @@ return values are combined.
 | `createLoop()` | `void` | Calls every listener. Pure notification, nothing can cancel. |
 | `createEventResult()` | [`EventResult`](./event-results.mdx) | Calls listeners until one interrupts; returns that result, else `pass()`. |
 | `createCompoundEventResult()` | [`CompoundEventResult<T>`](./event-results.mdx) | Like `createEventResult`, but carries extra data. |
-| `createInteractionResult()` | `InteractionResult` | Calls listeners until one returns a non-`PASS` vanilla `InteractionResult`. |
+| `createInteractionResult()` *(deprecated)* | `InteractionResult` | Calls listeners until one returns a vanilla `InteractionResult`. You should use `createEventResult()` with `EventResult` instead. |
 | `createConsumerLoop()` | (listeners are `Consumer<T>`) | A loop whose listener type is `Consumer<T>`. |
 | `createEventActorLoop()` | `EventActor<T>` returning `EventResult` | A loop of actors that can interrupt via `EventResult`. |
 

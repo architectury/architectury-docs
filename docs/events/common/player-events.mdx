@@ -30,15 +30,14 @@ These can't be cancelled - they tell you something happened.
 
 ## Cancellable events
 
-These return an [`EventResult`](../../events/event-results.mdx) (or `InteractionResult`) so you
-can cancel the action.
+These return an [`EventResult`](../../events/event-results.mdx) so you can cancel the action.
 
 | Event | Listener method | Returns |
 |---|---|---|
 | `PICKUP_ITEM_PRE` | `canPickup(Player, ItemEntity, ItemStack)` | `EventResult` - interrupt to prevent the pickup. |
 | `DROP_ITEM` | `drop(Player, ItemEntity)` | `EventResult` - interrupt to prevent the drop. |
 | `ATTACK_ENTITY` | `attack(Player, Level, Entity target, InteractionHand, EntityHitResult)` | `EventResult` - interrupt to cancel the attack. |
-| `FILL_BUCKET` | `fill(Player, Level, ItemStack, HitResult)` | `InteractionResult` - return non-`PASS` to handle/cancel it. |
+| `FILL_BUCKET` | `fill(Player, Level, ItemStack, HitResult)` | `EventResult` - interrupt to handle/cancel it. |
 
 ## Examples
 

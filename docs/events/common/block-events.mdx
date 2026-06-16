@@ -13,20 +13,18 @@ Events about blocks being broken, placed, or landed on by a falling block.
 
 | Event | Listener method | Returns |
 |---|---|---|
-| `BREAK` | `breakBlock(Level, BlockPos, BlockState, ServerPlayer, IntValue xp)` | `EventResult` - interrupt to cancel the break. |
+| `BREAK` | `breakBlock(Level, BlockPos, BlockState, ServerPlayer)` | `EventResult` - interrupt to cancel the break. |
 | `PLACE` | `placeBlock(Level, BlockPos, BlockState, Entity placer)` | `EventResult` - interrupt to cancel the placement. |
 | `FALLING_LAND` | `onLand(Level, BlockPos, BlockState fallState, BlockState landOn, FallingBlockEntity)` | `void` (notification). |
 
-For `BREAK`, the `xp` parameter is an `IntValue` (a mutable int wrapper) you can read and modify
-to change the dropped experience. It is always `null` on Fabric. For `PLACE`, the `placer` may be
-`null` (for example, when a dispenser places the block).
+For `PLACE`, the `placer` may be `null` (for example, when a dispenser places the block).
 
 ## Examples
 
 Protect bedrock from being broken:
 
 ```java
-BlockEvent.BREAK.register((level, pos, state, player, xp) -> {
+BlockEvent.BREAK.register((level, pos, state, player) -> {
     if (state.is(Blocks.BEDROCK)) {
         return EventResult.interruptFalse(); // deny the break
     }

@@ -28,6 +28,7 @@ interrupts, the event passes and vanilla behavior continues.
 | `EventResult.interruptTrue()` | yes | `true` | Stop and force the "success / allow" outcome. |
 | `EventResult.interruptFalse()` | yes | `false` | Stop and force the "fail / deny" outcome (commonly: cancel). |
 | `EventResult.interrupt(Boolean)` | yes | value | Programmatic form; `null` means no outcome. |
+| `EventResult.fromMinecraft(InteractionResult)` | depends | depends | Convert a vanilla `InteractionResult` into an `EventResult`. |
 
 What `true` / `false` *mean* is documented per event - but the common case is that
 `interruptFalse()` cancels a vanilla action.
@@ -35,7 +36,7 @@ What `true` / `false` *mean* is documented per event - but the common case is th
 ### Example: cancelling a block break
 
 ```java
-BlockEvent.BREAK.register((level, pos, state, player, xp) -> {
+BlockEvent.BREAK.register((level, pos, state, player) -> {
     if (state.is(Blocks.BEDROCK) && !player.hasPermissions(2)) {
         // Stop here and deny the break - vanilla won't destroy the block.
         return EventResult.interruptFalse();
@@ -58,6 +59,7 @@ result.isEmpty();     // ...or no outcome?
 result.isTrue();      // outcome == true
 result.isFalse();     // outcome == false
 result.value();       // Boolean outcome, or null when there's none
+result.asMinecraft(); // convert back to a vanilla InteractionResult
 ```
 
 ## `CompoundEventResult<T>`
@@ -79,8 +81,8 @@ CompoundEventResult.interrupt(Boolean, myStack);  // programmatic form
 And it exposes the same inspection methods as `EventResult`, plus:
 
 ```java
-compound.result();  // the underlying EventResult view
-compound.object();  // the extra data (null when passing)
+compound.result();       // the underlying EventResult view
+compound.object();       // the extra data (null when passing)
 ```
 
 :::note
