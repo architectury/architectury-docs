@@ -14,7 +14,7 @@ Call `register` with an implementation of the listener interface. Because listen
 are functional interfaces, you almost always pass a lambda:
 
 ```java
-BlockEvent.BREAK.register((level, pos, state, player, xp) -> {
+BlockEvent.BREAK.register((level, pos, state, player) -> {
     System.out.println(player.getName().getString() + " broke a block at " + pos);
     return EventResult.pass();
 });

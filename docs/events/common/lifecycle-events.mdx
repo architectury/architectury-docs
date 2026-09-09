@@ -7,9 +7,9 @@ title: Lifecycle Events
 
 `dev.architectury.event.events.common.LifecycleEvent`
 
-Fires as the **server** starts up, shuts down, and loads or saves levels. Use these to set up
-and tear down server-side state at the right moment. All of these are notifications (you can't
-cancel them).
+Fires as the **server** starts up, shuts down, loads or saves levels, and syncs its data to
+players. Use these to set up and tear down server-side state at the right moment. All of these
+are notifications (you can't cancel them).
 
 ## Events
 
@@ -24,9 +24,15 @@ cancel them).
 | `SERVER_LEVEL_UNLOAD` | `ServerLevel` | A level was unloaded on the server. |
 | `SERVER_LEVEL_SAVE` | `ServerLevel` | A level is being saved. |
 | `SETUP` | - (`Runnable`) | Common setup has begun. Registries should be populated by now. |
+| `TAGS_UPDATED` | `tagsUpdated(RegistryAccess registries, boolean client)` | Tags have finished loading and are ready to use. |
+| `DATAPACK_SYNC` | `sync(ServerPlayer, boolean joined)` | Data pack contents are about to be sent to a player. |
 
 The server-state events use the `ServerState` listener (`stateChanged(MinecraftServer)`); the
 level events use `ServerLevelState` (`act(ServerLevel)`).
+
+:::info[Added in 21.1]
+`TAGS_UPDATED` and `DATAPACK_SYNC` were added in Architectury API **21.1**.
+:::
 
 ## Example
 
@@ -37,6 +43,29 @@ LifecycleEvent.SERVER_STARTED.register(server -> {
 
 LifecycleEvent.SERVER_LEVEL_LOAD.register(level -> {
     // initialize per-level data
+});
+```
+
+## Tags and data pack syncing
+
+`TAGS_UPDATED` fires once tags are bound and safe to query. The `client` flag is `true` when
+this happened on the client as a result of receiving tags from a server, and `false` on the
+server. It mirrors NeoForge's `TagsUpdatedEvent` and Fabric's
+`CommonLifecycleEvents.TAGS_LOADED`.
+
+`DATAPACK_SYNC` fires once per player that data pack contents are about to be sent to, either
+because the player joined or because the server reloaded its resources. The `joined` flag tells
+the two cases apart: `true` for a fresh join, `false` for a reload. It mirrors NeoForge's
+`OnDatapackSyncEvent` and Fabric's `ServerLifecycleEvents.SYNC_DATA_PACK_CONTENTS`, and is the
+right place to send your own data-driven content to the player.
+
+```java
+LifecycleEvent.TAGS_UPDATED.register((registries, client) -> {
+    // rebuild any caches you keep that are keyed on tags
+});
+
+LifecycleEvent.DATAPACK_SYNC.register((player, joined) -> {
+    // send your mod's data-driven content to `player`
 });
 ```
 

@@ -7,7 +7,8 @@ title: Client GUI Events
 
 `dev.architectury.event.events.client.ClientGuiEvent`
 
-Hooks for rendering the in-game HUD and for initializing, rendering, and replacing screens.
+Hooks for rendering the in-game HUD and for initializing, rendering, replacing, and closing
+screens.
 
 ## Events
 
@@ -20,12 +21,26 @@ Hooks for rendering the in-game HUD and for initializing, rendering, and replaci
 | `RENDER_POST` | `render(Screen, GuiGraphicsExtractor, int mouseX, int mouseY, float delta)` | `void` - after a screen rendered. |
 | `RENDER_CONTAINER_BACKGROUND` | `render(AbstractContainerScreen, GuiGraphicsExtractor, int, int, float)` | `void` |
 | `RENDER_CONTAINER_FOREGROUND` | `render(AbstractContainerScreen, GuiGraphicsExtractor, int, int, float)` | `void` |
+| `RENDER_BACKGROUND` | `render(Screen, GuiGraphicsExtractor, int mouseX, int mouseY, float delta)` | `void` - after a screen's background was drawn. |
 | `SET_SCREEN` | `modifyScreen(Screen)` | `CompoundEventResult<Screen>` - replace the screen about to open. |
+| `SCREEN_CLOSING` | `closing(Screen)` | `void` - a screen is being closed and removed. |
+
+:::info[Added in 21.1]
+`RENDER_BACKGROUND` and `SCREEN_CLOSING` were added in Architectury API **21.1**.
+:::
 
 The render events give you a `GuiGraphicsExtractor` - the drawing context, with methods like
 `pose()`, `fill(...)`, and `text(font, component, x, y, color)`. The `ScreenAccess` passed to the
 `INIT` events lets you add or remove widgets on the screen - see
 [Screen Hooks](../../hooks/screen-hooks.mdx).
+
+`RENDER_BACKGROUND` fires after a screen's background has been drawn and before its contents.
+Unlike `RENDER_CONTAINER_BACKGROUND`, it fires for **every** screen, not just container screens.
+It mirrors NeoForge's `ScreenEvent.Render.Background` and Fabric's `ScreenEvents.afterBackground`.
+
+`SCREEN_CLOSING` fires when a screen is being closed and removed, which is the counterpart to
+`INIT_POST` and the right place to tear down anything you set up when the screen opened. It
+mirrors NeoForge's `ScreenEvent.Closing` and Fabric's `ScreenEvents.remove`.
 
 ## Examples
 
@@ -35,6 +50,26 @@ Draw something over the HUD:
 ClientGuiEvent.RENDER_HUD.register((graphics, deltaTracker) -> {
     Font font = Minecraft.getInstance().font;
     graphics.text(font, Component.literal("Hello HUD"), 4, 4, 0xFFFFFFFF);
+});
+```
+
+Draw behind a screen's contents:
+
+```java
+ClientGuiEvent.RENDER_BACKGROUND.register((screen, graphics, mouseX, mouseY, delta) -> {
+    if (screen instanceof MyCustomScreen) {
+        graphics.fill(0, 0, screen.width, screen.height, 0x40000000);
+    }
+});
+```
+
+Release resources when a screen closes:
+
+```java
+ClientGuiEvent.SCREEN_CLOSING.register(screen -> {
+    if (screen instanceof MyCustomScreen) {
+        // clean up whatever the screen was holding on to
+    }
 });
 ```
 

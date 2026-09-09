@@ -20,6 +20,11 @@ vanilla from handling it.
 | `MOUSE_CLICKED_POST` | `mouseClicked(Minecraft, MouseButtonInfo, int action)` |
 | `KEY_PRESSED` | `keyPressed(Minecraft, int action, KeyEvent)` |
 
+:::warning
+The result of `KEY_PRESSED` is ignored on NeoForge, as `InputEvent.Key` is not cancellable
+there. Interrupting it only swallows the key on Fabric.
+:::
+
 ## Example
 
 ```java

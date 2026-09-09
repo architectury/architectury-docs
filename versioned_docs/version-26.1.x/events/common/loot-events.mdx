@@ -7,13 +7,20 @@ title: Loot Events
 
 `dev.architectury.event.events.common.LootEvent`
 
-Modify loot tables as they load, adding extra drops without replacing the whole table.
+Modify or replace loot tables as they load.
 
 ## Events
 
-| Event | Listener method |
-|---|---|
-| `MODIFY_LOOT_TABLE` | `modifyLootTable(ResourceKey<LootTable> key, LootTableModificationContext context, boolean builtin)` |
+| Event | Listener method | Returns |
+|---|---|---|
+| `MODIFY_LOOT_TABLE` | `modifyLootTable(HolderLookup.Provider registries, ResourceKey<LootTable> key, LootTableModificationContext context, boolean builtin)` | `void` - add pools to the existing table. |
+| `REPLACE_LOOT_TABLE` | `replaceLootTable(HolderLookup.Provider registries, ResourceKey<LootTable> key, LootTable original)` | `CompoundEventResult<LootTable>` - interrupt to swap the whole table. |
+
+:::info[Added in 20.1]
+`REPLACE_LOOT_TABLE` was added in Architectury API **20.1**.
+:::
+
+## Adding to a table
 
 Use `context.addPool(LootPool.Builder)` to add a pool to the table.
 
@@ -22,17 +29,40 @@ a mod; `false` means it's from a user data pack. A common pattern is to only mod
 tables, so user data packs can fully override them.
 
 :::note
-On NeoForge this event only runs for **built-in** loot tables.
+On NeoForge, `builtin` is always `true`. The event does run for every loot table there, but
+`LootTableLoadEvent` does not expose where a table came from, so data pack tables cannot be told
+apart from built-in ones. Only Fabric reports the real value.
 :::
 
-## Example: add diamonds to the dirt loot table
+### Example: add diamonds to the dirt loot table
 
 ```java
-LootEvent.MODIFY_LOOT_TABLE.register((key, context, builtin) -> {
+LootEvent.MODIFY_LOOT_TABLE.register((registries, key, context, builtin) -> {
     if (builtin && Blocks.DIRT.getLootTable().equals(Optional.ofNullable(key))) {
         LootPool.Builder pool = LootPool.lootPool()
             .add(LootItem.lootTableItem(Items.DIAMOND));
         context.addPool(pool);
     }
+});
+```
+
+## Replacing a table
+
+Where `MODIFY_LOOT_TABLE` appends pools to the existing table, `REPLACE_LOOT_TABLE` swaps the
+whole table for a different one. Interrupt the
+[`CompoundEventResult`](../../events/event-results.mdx) with the replacement table to take
+effect, or return `CompoundEventResult.pass()` to leave the table alone. The first listener to
+interrupt wins, and later listeners still see the original table.
+
+This mirrors NeoForge's `LootTableLoadEvent#setTable` and Fabric's `LootTableEvents.REPLACE`.
+
+### Example: replace a table outright
+
+```java
+LootEvent.REPLACE_LOOT_TABLE.register((registries, key, original) -> {
+    if (key.identifier().equals(MyMod.id("chests/my_structure"))) {
+        return CompoundEventResult.interruptTrue(buildMyTable());
+    }
+    return CompoundEventResult.pass();
 });
 ```

@@ -7,25 +7,126 @@ title: Entity Events
 
 `dev.architectury.event.events.common.EntityEvent`
 
-Events about entities: dying, taking damage, spawning, being added to the world, moving between
-chunk sections, and being tamed.
+Events about entities: dying, taking damage, spawning, being added to and removed from the
+world, changing equipment, being tracked by players, moving between chunk sections, falling,
+mounting, and being tamed.
 
-## Events
+## Cancellable events
+
+These return an [`EventResult`](../../events/event-results.mdx) so you can cancel the action.
 
 | Event | Listener method | Returns |
 |---|---|---|
 | `LIVING_DEATH` | `die(LivingEntity, DamageSource)` | `EventResult` - interrupt to cancel the death. |
 | `LIVING_HURT` | `hurt(LivingEntity, DamageSource, float amount)` | `EventResult` - interrupt to cancel the damage. |
 | `LIVING_CHECK_SPAWN` | `canSpawn(LivingEntity, LevelAccessor, double x, double y, double z, EntitySpawnReason, BaseSpawner)` | `EventResult` - set an outcome to override whether it may spawn. |
+| `LIVING_FALL` | `fall(LivingEntity, DoubleValue distance, FloatValue damageMultiplier)` | `EventResult` - interrupt to cancel the fall entirely. |
 | `ADD` | `add(Entity, Level)` | `EventResult` - interrupt to prevent the entity being added. |
-| `ENTER_SECTION` | `enterSection(Entity, int sectionX, sectionY, sectionZ, int prevX, prevY, prevZ)` | `void` (notification). |
 | `ANIMAL_TAME` | `tame(Animal, Player)` | `EventResult` - interrupt to cancel the taming. |
+| `MOUNT` | `mount(Entity, Entity vehicle, boolean mounting)` | `EventResult` - interrupt to cancel the mount or dismount. |
+
+## Notification events
+
+These can't be cancelled - they tell you something happened.
+
+| Event | Listener method | Description |
+|---|---|---|
+| `LIVING_DAMAGE_POST` | `damage(LivingEntity, DamageSource, float originalDamage, float appliedDamage, boolean blocked)` | Damage has been applied to an entity. |
+| `REMOVE` | `remove(Entity, Level)` | An entity was removed from a level. |
+| `EQUIPMENT_CHANGE` | `change(LivingEntity, EquipmentSlot, ItemStack previousStack, ItemStack currentStack)` | An entity's equipment changed in a slot. |
+| `START_TRACKING` | `startTracking(Entity, ServerPlayer)` | A player started tracking an entity. |
+| `STOP_TRACKING` | `stopTracking(Entity, ServerPlayer)` | A player stopped tracking an entity. |
+| `ENTER_SECTION` | `enterSection(Entity, int sectionX, sectionY, sectionZ, int prevX, prevY, prevZ)` | An entity moved into a new chunk section. |
+
+:::info[Added in 20.1]
+`LIVING_FALL`, `MOUNT`, `LIVING_DAMAGE_POST`, `REMOVE`, `EQUIPMENT_CHANGE`,
+`START_TRACKING` and `STOP_TRACKING` were added in Architectury API **20.1**.
+:::
 
 :::note
 `LIVING_HURT` lets you **cancel** damage, but you currently cannot change the damage amount.
 `LIVING_CHECK_SPAWN` concerns natural/spawner spawning and worldgen; the `spawner` argument may
 be `null`. `ANIMAL_TAME` only fires for vanilla tamable mobs.
 :::
+
+## Sides
+
+`ADD`, `REMOVE`, `MOUNT` and `LIVING_FALL` fire on both the logical client and the logical
+server, so check `level.isClientSide()` if you only want one side. `LIVING_DAMAGE_POST`,
+`EQUIPMENT_CHANGE`, `START_TRACKING` and `STOP_TRACKING` only fire on the server.
+
+## Damage after the fact
+
+`LIVING_DAMAGE_POST` runs once the damage is final, so unlike `LIVING_HURT` it can neither
+cancel nor modify it. Use it to react to the outcome: `originalDamage` is the amount before
+reductions were applied, `appliedDamage` is the amount actually taken off the entity's health,
+and `blocked` reports whether the damage was blocked, for example by a shield. It mirrors
+NeoForge's `LivingDamageEvent.Post`.
+
+```java
+EntityEvent.LIVING_DAMAGE_POST.register((entity, source, originalDamage, appliedDamage, blocked) -> {
+    if (entity instanceof ServerPlayer player && blocked) {
+        // the player blocked the hit
+    }
+});
+```
+
+## Fall damage
+
+`LIVING_FALL` runs when an entity lands and fall damage is about to be worked out. The
+`distance` and `damageMultiplier` parameters are mutable wrappers (`DoubleValue` and
+`FloatValue`) pre-filled with the values vanilla would use; change them to scale the resulting
+damage. Interrupting with a false result cancels the fall entirely, so no fall damage is dealt
+and no fall side effects (such as farmland trampling) happen.
+
+It mirrors NeoForge's `LivingFallEvent`. Fabric has no equivalent, so Architectury supplies it
+with a mixin there.
+
+```java
+EntityEvent.LIVING_FALL.register((entity, distance, damageMultiplier) -> {
+    if (entity.getType() == MyEntities.MY_MOB.get()) {
+        damageMultiplier.accept(damageMultiplier.getAsFloat() * 0.5F); // half fall damage
+    }
+    return EventResult.pass();
+});
+```
+
+## Mounting
+
+`MOUNT` fires when an entity starts or stops riding another entity. `mounting` is `true` when
+mounting and `false` when dismounting; when dismounting, `vehicle` is the vehicle being left.
+Interrupting with a false result stops the entity from mounting, or keeps it on its vehicle when
+dismounting. It mirrors NeoForge's `EntityMountEvent`, and is supplied with a mixin on Fabric.
+
+```java
+EntityEvent.MOUNT.register((entity, vehicle, mounting) -> {
+    if (mounting && vehicle instanceof Boat && entity instanceof Creeper) {
+        return EventResult.interruptFalse(); // creepers may not ride boats
+    }
+    return EventResult.pass();
+});
+```
+
+## Equipment and tracking
+
+`EQUIPMENT_CHANGE` fires whenever a living entity's equipment changes in any slot, giving you
+the previous and the current stack. It mirrors NeoForge's `LivingEquipmentChangeEvent`.
+
+`START_TRACKING` and `STOP_TRACKING` fire when an entity enters or leaves a player's tracking
+range, which is the right moment to send that player any custom data you keep for the entity.
+They mirror NeoForge's `PlayerEvent.StartTracking` and `PlayerEvent.StopTracking`.
+
+```java
+EntityEvent.EQUIPMENT_CHANGE.register((entity, slot, previousStack, currentStack) -> {
+    if (slot == EquipmentSlot.HEAD) {
+        // the entity changed its helmet
+    }
+});
+
+EntityEvent.START_TRACKING.register((entity, player) -> {
+    // send `player` your custom data for `entity`
+});
+```
 
 ## Examples
 
@@ -48,5 +149,15 @@ EntityEvent.LIVING_CHECK_SPAWN.register((entity, world, x, y, z, type, spawner) 
         return EventResult.interruptFalse();
     }
     return EventResult.pass();
+});
+```
+
+Clean up state when an entity leaves the world:
+
+```java
+EntityEvent.REMOVE.register((entity, level) -> {
+    if (!level.isClientSide()) {
+        forgetAbout(entity);
+    }
 });
 ```

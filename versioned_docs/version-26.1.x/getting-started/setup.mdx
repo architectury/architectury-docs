@@ -112,11 +112,17 @@ enabled_platforms = fabric,neoforge
 minecraft_version = 26.1.2
 
 # Dependencies
-architectury_api_version = 20.0.5
-fabric_loader_version = 0.19.3
-fabric_api_version = 0.150.0
-neoforge_version = 26.1.2.71
+architectury_api_version = 20.1.13
+fabric_loader_version = 0.19.5
+fabric_api_version = 0.155.2+26.1.2
+neoforge_version = 26.1.2.99
 ```
+
+:::info[Architectury API 20.1]
+20.1 is the current release for Minecraft 26.1.x and adds a number of new events. Anything
+marked **Added in 20.1** elsewhere in these docs is unavailable on 20.0.x, so set
+`architectury_api_version` to at least `20.1` to use it.
+:::
 
 Add the Architectury Maven repository to `settings.gradle` and include the subprojects:
 

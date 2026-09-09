@@ -1,0 +1,70 @@
+---
+sidebar_position: 13
+title: Mob Effect Events
+---
+
+# Mob Effect Events
+
+`dev.architectury.event.events.common.MobEffectEvent`
+
+Fires as mob effects (potion effects) are applied to and removed from living entities. All of
+these events fire on the **server** only.
+
+:::info[Added in 20.1]
+`MobEffectEvent` was added in Architectury API **20.1**.
+:::
+
+## Events
+
+| Event | Listener method | Returns |
+|---|---|---|
+| `ALLOW_ADD` | `allowAdd(LivingEntity, MobEffectInstance)` | `EventResult` - interrupt to prevent the effect being applied. |
+| `AFTER_ADD` | `afterAdd(LivingEntity, MobEffectInstance)` | `void` (notification). |
+| `ALLOW_REMOVE` | `allowRemove(LivingEntity, MobEffectInstance)` | `EventResult` - interrupt to prevent the effect being removed. |
+
+`ALLOW_ADD` runs before the effect is applied, so interrupting it with a false result keeps the
+entity from gaining the effect at all. `AFTER_ADD` runs once the effect is on the entity and
+cannot be cancelled.
+
+:::note
+`ALLOW_REMOVE` covers **early** removals only - drinking milk, using a totem of undying, or
+`/effect clear`. It does not fire when an effect simply runs out on its own.
+:::
+
+These mirror NeoForge's `MobEffectEvent.Applicable`, `MobEffectEvent.Added` and
+`MobEffectEvent.Remove`, and Fabric's `ServerMobEffectEvents.ALLOW_ADD`, `AFTER_ADD` and
+`ALLOW_EARLY_REMOVE`.
+
+## Examples
+
+Make a custom entity immune to poison:
+
+```java
+MobEffectEvent.ALLOW_ADD.register((entity, effect) -> {
+    if (entity.getType() == MyEntities.MY_MOB.get() && effect.is(MobEffects.POISON)) {
+        return EventResult.interruptFalse(); // the effect is not applied
+    }
+    return EventResult.pass();
+});
+```
+
+React once an effect has been applied:
+
+```java
+MobEffectEvent.AFTER_ADD.register((entity, effect) -> {
+    if (entity instanceof ServerPlayer player) {
+        // the player now has `effect`
+    }
+});
+```
+
+Keep a curse from being cleared early:
+
+```java
+MobEffectEvent.ALLOW_REMOVE.register((entity, effect) -> {
+    if (effect.is(MyEffects.MY_CURSE)) {
+        return EventResult.interruptFalse(); // milk will not clear it
+    }
+    return EventResult.pass();
+});
+```

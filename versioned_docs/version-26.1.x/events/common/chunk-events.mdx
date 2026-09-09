@@ -7,8 +7,8 @@ title: Chunk Events
 
 `dev.architectury.event.events.common.ChunkEvent`
 
-Fires when a chunk's data is saved or loaded, letting you attach and read your own persistent
-data. Both are notifications.
+Fires when a chunk enters or leaves a level, and when a chunk's data is saved or loaded. All of
+these are notifications.
 
 ## Events
 
@@ -16,11 +16,17 @@ data. Both are notifications.
 |---|---|---|
 | `SAVE_DATA` | `save(ChunkAccess, ServerLevel, SerializableChunkData)` | Just before a chunk's data is written. |
 | `LOAD_DATA` | `load(ChunkAccess, ServerLevel, SerializableChunkData)` | Just before a chunk's data is read. |
+| `LOAD` | `load(LevelChunk, Level, boolean newChunk)` | A chunk has been loaded into a level. |
+| `UNLOAD` | `unload(LevelChunk, Level)` | A chunk is being unloaded from a level. |
+
+:::info[Added in 20.1]
+`LOAD` and `UNLOAD` were added in Architectury API **20.1**.
+:::
+
+## Persisting chunk data
 
 On `SAVE_DATA`, write your own values into the provided data so they're persisted alongside the
 chunk; on `LOAD_DATA`, read them back. The `ServerLevel` passed to `load` may be `null`.
-
-## Example
 
 ```java
 ChunkEvent.SAVE_DATA.register((chunk, level, data) -> {
@@ -29,5 +35,29 @@ ChunkEvent.SAVE_DATA.register((chunk, level, data) -> {
 
 ChunkEvent.LOAD_DATA.register((chunk, level, data) -> {
     // read your mod's per-chunk data back from `data`
+});
+```
+
+## Tracking loaded chunks
+
+`LOAD` and `UNLOAD` tell you when a chunk joins or leaves a level. They fire on both the client
+and the server, so check `level.isClientSide()` if you only want one side. `LOAD` fires once the
+chunk is already in the level; `UNLOAD` fires while the chunk is still present, so the chunk is
+safe to read in both.
+
+The `newChunk` flag on `LOAD` is `true` when the chunk was newly generated rather than read from
+disk. It is always `false` on the client.
+
+These mirror NeoForge's `ChunkEvent.Load` and `ChunkEvent.Unload`.
+
+```java
+ChunkEvent.LOAD.register((chunk, level, newChunk) -> {
+    if (!level.isClientSide() && newChunk) {
+        // the chunk was just generated
+    }
+});
+
+ChunkEvent.UNLOAD.register((chunk, level) -> {
+    // drop any state you were keeping for this chunk
 });
 ```

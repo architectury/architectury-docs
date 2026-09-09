@@ -7,7 +7,7 @@ title: Block Events
 
 `dev.architectury.event.events.common.BlockEvent`
 
-Events about blocks being broken, placed, or landed on by a falling block.
+Events about blocks being broken, placed, landed on by a falling block, or moved by a piston.
 
 ## Events
 
@@ -16,8 +16,27 @@ Events about blocks being broken, placed, or landed on by a falling block.
 | `BREAK` | `breakBlock(Level, BlockPos, BlockState, ServerPlayer)` | `EventResult` - interrupt to cancel the break. |
 | `PLACE` | `placeBlock(Level, BlockPos, BlockState, Entity placer)` | `EventResult` - interrupt to cancel the placement. |
 | `FALLING_LAND` | `onLand(Level, BlockPos, BlockState fallState, BlockState landOn, FallingBlockEntity)` | `void` (notification). |
+| `PISTON_PRE` | `piston(Level, BlockPos, Direction, boolean extending)` | `EventResult` - interrupt to stop the piston moving. |
+| `PISTON_POST` | `piston(Level, BlockPos, Direction, boolean extending)` | `void` (notification). |
+
+:::info[Added in 21.1]
+`PISTON_PRE` and `PISTON_POST` were added in Architectury API **21.1**.
+:::
 
 For `PLACE`, the `placer` may be `null` (for example, when a dispenser places the block).
+
+## Piston events
+
+`PISTON_PRE` fires after vanilla has decided a piston should move but before any blocks are
+moved; `PISTON_POST` fires once the move has completed. `PISTON_POST` does not fire when the
+move was refused, either by vanilla or by a listener interrupting `PISTON_PRE`.
+
+Both events give you the position of the piston **base**, the direction it faces, and whether it
+is extending (`true`) or retracting (`false`). Both fire on the logical client and the logical
+server, so check `level.isClientSide()` if you only want one side.
+
+These mirror NeoForge's `PistonEvent.Pre` and `PistonEvent.Post`. Fabric has no equivalent, so
+Architectury supplies them with a mixin there.
 
 ## Examples
 
@@ -37,5 +56,20 @@ React to a falling block landing:
 ```java
 BlockEvent.FALLING_LAND.register((level, pos, fallState, landOn, entity) -> {
     // e.g. spawn particles where the block landed
+});
+```
+
+Stop pistons from working inside a protected region:
+
+```java
+BlockEvent.PISTON_PRE.register((level, pos, direction, extending) -> {
+    if (isProtected(level, pos)) {
+        return EventResult.interruptFalse(); // the piston does not move
+    }
+    return EventResult.pass();
+});
+
+BlockEvent.PISTON_POST.register((level, pos, direction, extending) -> {
+    // the piston has finished extending or retracting
 });
 ```

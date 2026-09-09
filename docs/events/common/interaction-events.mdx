@@ -17,10 +17,91 @@ right-click / left-click behavior.
 | `LEFT_CLICK_BLOCK` | `click(Player, InteractionHand, BlockPos, Direction face)` | `EventResult` |
 | `RIGHT_CLICK_BLOCK` | `click(Player, InteractionHand, BlockPos, Direction face)` | `EventResult` |
 | `RIGHT_CLICK_ITEM` | `click(Player, InteractionHand)` | `EventResult` |
+| `USE_ITEM_ON_BLOCK` | `useItemOn(Level, Player, InteractionHand, ItemStack, BlockState, BlockHitResult)` | `EventResult` |
+| `USE_BLOCK_WITHOUT_ITEM` | `useWithoutItem(Level, Player, BlockState, BlockHitResult)` | `EventResult` |
+| `USE_ITEM_ON` | `useOn(UseOnContext)` | `EventResult` |
+| `USE_ITEM` | `use(Level, Player, InteractionHand)` | `EventResult` |
 | `INTERACT_ENTITY` | `interact(Player, Entity, InteractionHand)` | `EventResult` |
 | `FARMLAND_TRAMPLE` | `trample(Level, BlockPos, BlockState, double distance, Entity)` | `EventResult` |
+| `PICK_ITEM_FROM_BLOCK` | `pick(ServerPlayer, BlockPos, BlockState, boolean includeData)` | `CompoundEventResult<ItemStack>` |
+| `PICK_ITEM_FROM_ENTITY` | `pick(ServerPlayer, Entity, boolean includeData)` | `CompoundEventResult<ItemStack>` |
+| `CLIENT_PRE_ATTACK` | `preAttack(Player, int clickCount)` | `EventResult` - **client only** |
 | `CLIENT_LEFT_CLICK_AIR` | `click(Player, InteractionHand)` | `void` - **client only** |
 | `CLIENT_RIGHT_CLICK_AIR` | `click(Player, InteractionHand)` | `void` - **client only** |
+
+:::info[Added in 21.1]
+`USE_ITEM_ON_BLOCK`, `USE_BLOCK_WITHOUT_ITEM`, `USE_ITEM_ON`, `USE_ITEM`,
+`PICK_ITEM_FROM_BLOCK`, `PICK_ITEM_FROM_ENTITY` and `CLIENT_PRE_ATTACK` were added in
+Architectury API **21.1**.
+:::
+
+:::note[Naming an exact vanilla outcome]
+These events return an [`EventResult`](../../events/event-results.mdx). Return
+`EventResult.pass()` to stay out of the way and let other listeners and vanilla logic run. Any
+interrupting result replaces the vanilla behaviour, and its `asMinecraft()` value is handed back
+to the game in place of it.
+
+When you need to name an exact vanilla outcome rather than a plain true/false, build the result
+with `EventResult.fromMinecraft(InteractionResult)`.
+:::
+
+## The right-click chain
+
+`RIGHT_CLICK_BLOCK` fires once per right click, before the game decides which behaviour to run.
+The three `USE_*` events below it are finer grained: each fires only when the corresponding
+vanilla behaviour is about to run, in the order vanilla walks through them.
+
+| Order | Event | Vanilla call it wraps |
+|---|---|---|
+| 1 | `USE_ITEM_ON_BLOCK` | `BlockState#useItemOn` - the block's behaviour for a player holding an item. |
+| 2 | `USE_BLOCK_WITHOUT_ITEM` | `BlockState#useWithoutItem` - the block's empty-handed behaviour, reached when step 1 declined. |
+| 3 | `USE_ITEM_ON` | `Item#useOn` - the item's behaviour, reached when the block declined the interaction. |
+
+Because vanilla falls through the chain, a block such as a door can still be opened while the
+player is holding an item that does nothing at step 1.
+
+`USE_ITEM` is separate from the chain: it wraps `Item#use`, so it fires whenever an item's own
+use behaviour is about to run. That is finer grained than `RIGHT_CLICK_ITEM`, which fires once
+when the player right clicks with nothing else to interact with.
+
+Interrupting any of these replaces the vanilla behaviour and is handed back to the game in its
+place. All four fire on both the logical client and the logical server.
+
+:::note[Loader differences]
+`USE_ITEM_ON_BLOCK` maps to NeoForge's `UseItemOnBlockEvent` in the `BLOCK` phase and Fabric's
+`BlockEvents.USE_ITEM_ON`. `USE_ITEM_ON` maps to `UseItemOnBlockEvent` in the
+`ITEM_AFTER_BLOCK` phase and Fabric's `ItemEvents.USE_ON`; the two loaders cancel at slightly
+different depths, so replacing the result still awards `Stats.ITEM_USED` on Fabric but not on
+NeoForge. `USE_BLOCK_WITHOUT_ITEM` and `USE_ITEM` are native on Fabric
+(`BlockEvents.USE_WITHOUT_ITEM` and `ItemEvents.USE`); NeoForge has no equivalent, so
+Architectury supplies them with a mixin there.
+:::
+
+The `UseOnContext` passed to `USE_ITEM_ON` may have a `null` player, as items are also placed by
+non-player sources such as dispensers.
+
+## Picking items
+
+`PICK_ITEM_FROM_BLOCK` and `PICK_ITEM_FROM_ENTITY` fire when a player picks the item for a block
+or an entity, before vanilla works out what that item should be. Both run on the server in
+response to the pick-block packet, so they apply in both single and multiplayer.
+
+Both return a [`CompoundEventResult<ItemStack>`](../../events/event-results.mdx). Interrupt it
+with a stack to replace what gets picked; interrupt it with an empty stack to pick nothing at
+all. The `includeData` flag is `true` when the player asked for the block's or entity's data to
+be copied onto the item, which vanilla only honours in creative mode.
+
+These mirror Fabric's `PlayerPickItemEvents.BLOCK` and `PlayerPickItemEvents.ENTITY`. NeoForge
+has no such event, so Architectury supplies them with a mixin there.
+
+```java
+InteractionEvent.PICK_ITEM_FROM_BLOCK.register((player, pos, state, includeData) -> {
+    if (state.is(MyBlocks.MY_MACHINE.get())) {
+        return CompoundEventResult.interruptTrue(new ItemStack(MyItems.MACHINE_KIT.get()));
+    }
+    return CompoundEventResult.pass();
+});
+```
 
 ## Examples
 
@@ -37,6 +118,28 @@ InteractionEvent.RIGHT_CLICK_BLOCK.register((player, hand, pos, face) -> {
 });
 ```
 
+Stop a specific item from being used on blocks:
+
+```java
+InteractionEvent.USE_ITEM_ON.register(context -> {
+    if (context.getItemInHand().is(MyItems.FRAGILE_TOOL.get())) {
+        return EventResult.interruptFalse();
+    }
+    return EventResult.pass();
+});
+```
+
+Hand back an exact vanilla outcome:
+
+```java
+InteractionEvent.USE_ITEM_ON_BLOCK.register((level, player, hand, stack, state, hit) -> {
+    if (state.is(MyBlocks.MY_MACHINE.get())) {
+        return EventResult.fromMinecraft(InteractionResult.SUCCESS);
+    }
+    return EventResult.pass();
+});
+```
+
 Cancel interacting with a protected entity:
 
 ```java
@@ -48,7 +151,24 @@ InteractionEvent.INTERACT_ENTITY.register((player, entity, hand) -> {
 });
 ```
 
+## Client-only events
+
+`CLIENT_PRE_ATTACK` fires once per client tick while the attack key is held or was pressed,
+before the attack is processed. `clickCount` is how many times the attack key was pressed since
+the last tick; zero means the key is merely being held down. Interrupting with a false result
+cancels the attack and any block breaking that would have continued this tick. It mirrors
+Fabric's `ClientPreAttackCallback`, and is supplied with a mixin on NeoForge.
+
+```java
+InteractionEvent.CLIENT_PRE_ATTACK.register((player, clickCount) -> {
+    if (shouldSuppressAttack()) {
+        return EventResult.interruptFalse();
+    }
+    return EventResult.pass();
+});
+```
+
 :::warning
-`CLIENT_LEFT_CLICK_AIR` and `CLIENT_RIGHT_CLICK_AIR` only fire on the client, and the player is
-always the `LocalPlayer`. Only register them from client-side code.
+`CLIENT_PRE_ATTACK`, `CLIENT_LEFT_CLICK_AIR` and `CLIENT_RIGHT_CLICK_AIR` only fire on the
+client, and the player is always the `LocalPlayer`. Only register them from client-side code.
 :::

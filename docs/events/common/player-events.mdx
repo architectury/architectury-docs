@@ -7,8 +7,9 @@ title: Player Events
 
 `dev.architectury.event.events.common.PlayerEvent`
 
-Server-side events about players: joining and leaving, crafting and smelting, picking up and
-dropping items, attacking, opening menus, and more.
+Events about players: joining and leaving, crafting and smelting, picking up and dropping
+items, attacking, opening menus, block breaking speed, and more. Unless noted otherwise these
+fire on the server.
 
 ## Notification events
 
@@ -38,6 +39,33 @@ These return an [`EventResult`](../../events/event-results.mdx) so you can cance
 | `DROP_ITEM` | `drop(Player, ItemEntity)` | `EventResult` - interrupt to prevent the drop. |
 | `ATTACK_ENTITY` | `attack(Player, Level, Entity target, InteractionHand, EntityHitResult)` | `EventResult` - interrupt to cancel the attack. |
 | `FILL_BUCKET` | `fill(Player, Level, ItemStack, HitResult)` | `EventResult` - interrupt to handle/cancel it. |
+| `BREAK_SPEED` | `breakSpeed(Player, BlockState, BlockPos pos, FloatValue speed)` | `EventResult` - interrupt to stop the player breaking the block. |
+
+:::info[Added in 21.1]
+`BREAK_SPEED` was added in Architectury API **21.1**.
+:::
+
+## Block breaking speed
+
+`BREAK_SPEED` runs when a player's block breaking speed is calculated, from
+`Player#getDestroySpeed(BlockState)`. The `speed` parameter is a `FloatValue` (a mutable float
+wrapper) pre-filled with the vanilla value; change it to make the player mine faster or slower.
+Interrupting with a false result stops the player from breaking the block at all.
+
+The `pos` parameter is `null` when the caller did not supply one. Fabric never supplies one, as
+vanilla does not pass the position down to this calculation.
+
+This mirrors NeoForge's `PlayerEvent.BreakSpeed`. Fabric has no equivalent, so Architectury
+supplies it with a mixin there.
+
+```java
+PlayerEvent.BREAK_SPEED.register((player, state, pos, speed) -> {
+    if (player.getItemBySlot(EquipmentSlot.FEET).is(Items.DIAMOND_BOOTS)) {
+        speed.accept(speed.getAsFloat() * 2.0F); // mine twice as fast
+    }
+    return EventResult.pass();
+});
+```
 
 ## Examples
 
