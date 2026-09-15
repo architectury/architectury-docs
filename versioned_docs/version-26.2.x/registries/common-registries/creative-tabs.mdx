@@ -1,0 +1,78 @@
+---
+sidebar_position: 3
+title: Creative Tabs
+---
+
+# Creative Tabs
+
+`dev.architectury.registry.CreativeTabRegistry`
+
+Create your own creative mode tabs, and add items to your own or to vanilla tabs.
+
+:::note[Experimental]
+Most methods on `CreativeTabRegistry` are marked experimental and may change between versions.
+:::
+
+## Creating a tab
+
+`CreativeModeTab`s are registered like any other content: through a
+[`DeferredRegister`](./deferred-register.mdx) for `Registries.CREATIVE_MODE_TAB`. Use
+`CreativeTabRegistry.create` to build the tab itself.
+
+```java
+public static final DeferredRegister<CreativeModeTab> TABS =
+    DeferredRegister.create(MyMod.MOD_ID, Registries.CREATIVE_MODE_TAB);
+
+public static final RegistrySupplier<CreativeModeTab> MY_TAB = TABS.register("my_tab", () ->
+    CreativeTabRegistry.create(
+        Component.translatable("category.mymod"),     // tab title
+        () -> new ItemStack(MyMod.RUBY.get())          // tab icon
+    ));
+```
+
+Don't forget to call `TABS.register()` in your initializer.
+
+For more control there's an overload taking a builder callback:
+
+```java
+CreativeTabRegistry.create(builder -> {
+    builder.title(Component.translatable("category.mymod"));
+    builder.icon(() -> new ItemStack(MyMod.RUBY.get()));
+});
+```
+
+## Putting your items in your tab
+
+The easiest way is the injected `arch$tab` method on `Item.Properties` when you create the item
+(alongside the required `setId`, see [DeferredRegister](./deferred-register.mdx)):
+
+```java
+public static final RegistrySupplier<Item> RUBY = ITEMS.register("ruby", () -> {
+    ResourceKey<Item> key = ResourceKey.create(Registries.ITEM,
+        Identifier.fromNamespaceAndPath(MyMod.MOD_ID, "ruby"));
+    return new Item(new Item.Properties().arch$tab(MyMod.MY_TAB).setId(key));
+});
+```
+
+(`arch$tab` is one of Architectury's [injected extensions](../../other/injected-interfaces.mdx).)
+
+## Adding items to an existing tab
+
+To add items to a tab you don't own (including vanilla tabs), append to it by its
+`ResourceKey<CreativeModeTab>`:
+
+```java
+CreativeTabRegistry.append(CreativeModeTabs.INGREDIENTS, MyMod.RUBY, MyMod.SAPPHIRE);
+```
+
+There are several variants:
+
+- `append(tab, ItemLike...)` / `append(tab, Supplier<? extends ItemLike>...)`
+- `appendStack(tab, ItemStack...)` / `appendStack(tab, Supplier<ItemStack>...)`
+- `modify(tab, ModifyTabCallback)` for full control - the callback receives the
+  `FeatureFlagSet`, a `CreativeTabOutput` to add entries to, and whether game-master blocks are
+  allowed.
+
+The `tab` argument can be a `ResourceKey<CreativeModeTab>`, or a `DeferredSupplier` obtained from
+`CreativeTabRegistry.defer(key)` / `ofBuiltin(tab)`. The `*Builtin` convenience variants
+(`appendBuiltin`, `modifyBuiltin`) take a `CreativeModeTab` instance directly.

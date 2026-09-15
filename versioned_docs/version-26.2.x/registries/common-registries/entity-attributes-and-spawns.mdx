@@ -1,0 +1,46 @@
+---
+sidebar_position: 5
+title: Entity Attributes & Spawns
+---
+
+# Entity Attributes & Spawns
+
+Two small registries configure custom living entities: their default attributes, and where they
+naturally spawn.
+
+## Entity attributes
+
+`dev.architectury.registry.level.entity.EntityAttributeRegistry`
+
+Every `LivingEntity` needs a set of default attributes (max health, movement speed, and so on).
+Register them with `EntityAttributeRegistry.register`, passing your entity type and an
+`AttributeSupplier.Builder`:
+
+```java
+EntityAttributeRegistry.register(
+    MyMod.MY_MOB,                  // Supplier<? extends EntityType<? extends LivingEntity>>
+    () -> Mob.createMobAttributes()
+        .add(Attributes.MAX_HEALTH, 20.0)
+        .add(Attributes.MOVEMENT_SPEED, 0.25)
+);
+```
+
+Call this from your common initializer (after your entity type is registered).
+
+## Spawn placements
+
+`dev.architectury.registry.level.entity.SpawnPlacementsRegistry`
+
+Control where and how a `Mob` spawns naturally with `SpawnPlacementsRegistry.register`:
+
+```java
+SpawnPlacementsRegistry.register(
+    MyMod.MY_MOB,                            // Supplier<? extends EntityType<T>>
+    SpawnPlacementTypes.ON_GROUND,           // SpawnPlacementType
+    Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+    (type, level, spawnReason, pos, random) ->
+        Monster.checkMonsterSpawnRules(type, level, spawnReason, pos, random) // SpawnPredicate<T>
+);
+```
+
+The predicate decides whether a spawn attempt at a given position is allowed.

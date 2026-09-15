@@ -1,0 +1,27 @@
+---
+sidebar_position: 9
+title: Client System Message Events
+---
+
+# Client System Message Events
+
+`dev.architectury.event.events.client.ClientSystemMessageEvent`
+
+Intercept **system messages** the client receives (as opposed to player chat).
+
+## Events
+
+| Event | Listener method | Returns |
+|---|---|---|
+| `RECEIVED` | `process(Component message)` | `CompoundEventResult<Component>` - interrupt with a `Component` to override the message. |
+
+## Example
+
+```java
+ClientSystemMessageEvent.RECEIVED.register(message -> {
+    if (message.getString().contains("secret")) {
+        return CompoundEventResult.interruptFalse(null); // suppress it
+    }
+    return CompoundEventResult.pass();
+});
+```

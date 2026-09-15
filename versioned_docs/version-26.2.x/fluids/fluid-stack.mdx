@@ -1,0 +1,104 @@
+---
+sidebar_position: 3
+title: FluidStack
+---
+
+# FluidStack
+
+`dev.architectury.fluid.FluidStack`
+
+A `FluidStack` is the cross-platform equivalent of an `ItemStack` for fluids: a fluid plus an
+amount, with optional data components. Fabric and NeoForge represent fluids very differently -
+`FluidStack` gives you one API for both.
+
+:::warning[Requires loaded registries]
+Since this Minecraft version, constructing a `FluidStack` requires registries to be loaded. Do
+**not** create one in a static field, a recipe, or anything that runs before registries are
+available - use [`FluidStackTemplate`](./fluid-stack-template.mdx) for those early definitions and
+call `create()` to get a `FluidStack` later.
+:::
+
+## Amounts are platform-specific
+
+:::warning[Always use `bucketAmount()`]
+The **unit** of a fluid amount differs by loader: one bucket is **1000** on NeoForge but
+**81000** on Fabric. Never hard-code `1000`. Use `FluidStack.bucketAmount()` and multiply from
+there.
+:::
+
+```java
+long oneBucket = FluidStack.bucketAmount();
+long halfBucket = FluidStack.bucketAmount() / 2;
+```
+
+## Creating a FluidStack
+
+```java
+FluidStack stack = FluidStack.create(Fluids.WATER, FluidStack.bucketAmount());
+FluidStack empty = FluidStack.empty();
+```
+
+`create` has overloads taking the fluid as a `Fluid`, a `Supplier<Fluid>`, or a `Holder<Fluid>`,
+each optionally with a `DataComponentPatch`. Creating with an `EMPTY` fluid or an amount `<= 0`
+returns the shared empty stack.
+
+## Reading and modifying
+
+| Method | Description |
+|---|---|
+| `getFluid()` | The fluid (or `Fluids.EMPTY`). |
+| `isEmpty()` | Whether it's empty (no fluid or amount `<= 0`). |
+| `getAmount()` / `setAmount(long)` | The amount. |
+| `grow(long)` / `shrink(long)` | Increase / decrease the amount. |
+| `copy()` | A deep copy. |
+| `copyWithAmount(long)` | A copy with a different amount. |
+| `getName()` / `getTranslationKey()` | Display name / translation key. |
+
+```java
+FluidStack lava = FluidStack.create(Fluids.LAVA, FluidStack.bucketAmount());
+lava.grow(FluidStack.bucketAmount());      // now two buckets
+if (!lava.isEmpty()) {
+    Component name = lava.getName();
+}
+```
+
+## Data components
+
+`FluidStack` is a `DataComponentHolder`, so it carries data components just like an `ItemStack`:
+
+```java
+stack.set(MyComponents.COLOR, 0xFF0000);
+int color = stack.getOrDefault(MyComponents.COLOR, 0xFFFFFF);
+stack.remove(MyComponents.COLOR);
+```
+
+It also offers `getComponents()`, `applyComponents(patch)`, and `update(...)` overloads.
+
+## Comparing
+
+- `isFluidStackEqual(other)` - same fluid, amount, and components.
+- `isFluidEqual(other)` - same fluid only.
+- `isComponentEqual(other)` - same components only.
+
+## Serialization
+
+`FluidStack` provides codecs and read/write helpers:
+
+```java
+// Codecs:
+FluidStack.CODEC;        // Codec<FluidStack>
+FluidStack.STREAM_CODEC; // StreamCodec<RegistryFriendlyByteBuf, FluidStack>
+
+// Network buffer:
+stack.write(buf);
+FluidStack fromBuf = FluidStack.read(buf);
+
+// NBT:
+Tag tag = stack.write(provider, new CompoundTag());
+Optional<FluidStack> fromTag = FluidStack.read(provider, tag);
+```
+
+:::note
+For a serializable, `Holder`-based description of a fluid (rather than a mutable working stack),
+see [FluidStackTemplate](./fluid-stack-template.mdx).
+:::

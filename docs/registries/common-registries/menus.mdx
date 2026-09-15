@@ -17,7 +17,7 @@ Register `MenuType`s through a [`DeferredRegister`](./deferred-register.mdx) for
 `Registries.MENU`.
 
 For an **extended** menu (one that needs extra data on open), create the type with
-`MenuRegistry.ofExtended`:
+`MenuRegistry.ofExtended`, passing a `StreamCodec` for the extra data:
 
 ```java
 public static final DeferredRegister<MenuType<?>> MENUS =
@@ -25,36 +25,85 @@ public static final DeferredRegister<MenuType<?>> MENUS =
 
 public static final RegistrySupplier<MenuType<MyMenu>> MY_MENU =
     MENUS.register("my_menu", () -> MenuRegistry.ofExtended(
-        (windowId, inventory, buf) -> new MyMenu(windowId, inventory, buf)));
+        (windowId, inventory, pos) -> new MyMenu(windowId, inventory, pos),
+        BlockPos.STREAM_CODEC));
 ```
 
-The factory receives the window id, the player `Inventory`, and a `FriendlyByteBuf` containing
-the extra data you wrote when opening the menu.
+The factory receives the window id, the player `Inventory`, and the extra data already decoded by
+the codec - a `BlockPos` in the example above. Any `StreamCodec` over `RegistryFriendlyByteBuf`
+works, so a record holding several values can be sent in one go.
 
 ## Opening a menu
 
 | Method | Use for |
 |---|---|
 | `openMenu(ServerPlayer, MenuProvider)` | A plain menu with no extra data. |
-| `openExtendedMenu(ServerPlayer, MenuProvider, Consumer<FriendlyByteBuf>)` | An extended menu; write your extra data into the buffer. |
-| `openExtendedMenu(ServerPlayer, ExtendedMenuProvider)` | An extended menu, when your provider implements `ExtendedMenuProvider`. |
+| `openExtendedMenu(ServerPlayer, ExtendedMenuDataProvider<D>)` | An extended menu; the provider supplies the extra data. |
 
 ```java
-MenuRegistry.openExtendedMenu(serverPlayer, myProvider, buf -> {
-    buf.writeBlockPos(pos); // extra data sent to the client
-});
+MenuRegistry.openExtendedMenu(serverPlayer, myProvider);
 ```
 
-### ExtendedMenuProvider
+### ExtendedMenuDataProvider
 
-`dev.architectury.registry.menu.ExtendedMenuProvider` is a `MenuProvider` with one extra method:
+`dev.architectury.registry.menu.ExtendedMenuDataProvider<D>` is a `MenuProvider` with two extra
+methods:
 
 ```java
-void saveExtraData(FriendlyByteBuf buf);
+D getExtraData(ServerPlayer player);
+
+StreamCodec<? super RegistryFriendlyByteBuf, D> getExtraDataCodec();
 ```
 
-Implement it to bundle the menu's display name, the menu factory, and the extra-data writer in
-one object, then pass it to `openExtendedMenu`.
+Implement it to bundle the menu's display name, the menu factory, and the extra data in one object,
+then pass it to `openExtendedMenu`.
+
+The codec returned by `getExtraDataCodec()` must be the same one passed to `ofExtended` when the
+`MenuType` was created, otherwise the client fails to decode the data.
+
+```java
+public class MyMenuProvider implements ExtendedMenuDataProvider<BlockPos> {
+    private final BlockPos pos;
+
+    public MyMenuProvider(BlockPos pos) {
+        this.pos = pos;
+    }
+
+    @Override
+    public BlockPos getExtraData(ServerPlayer player) {
+        return pos;
+    }
+
+    @Override
+    public StreamCodec<? super RegistryFriendlyByteBuf, BlockPos> getExtraDataCodec() {
+        return BlockPos.STREAM_CODEC;
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatable("menu.mymod.my_menu");
+    }
+
+    @Override
+    public AbstractContainerMenu createMenu(int windowId, Inventory inventory, Player player) {
+        return new MyMenu(windowId, inventory, pos);
+    }
+}
+```
+
+:::warning[Deprecated in 22.0]
+The `FriendlyByteBuf` based API is deprecated and scheduled for removal in Architectury 23:
+
+- `ofExtended(ExtendedMenuTypeFactory<T>)` and `ExtendedMenuTypeFactory` - use
+  `ofExtended(ExtendedMenuDataFactory<T, D>, StreamCodec)` and `ExtendedMenuDataFactory`.
+- `openExtendedMenu(ServerPlayer, MenuProvider, Consumer<FriendlyByteBuf>)` and
+  `openExtendedMenu(ServerPlayer, ExtendedMenuProvider)` - use
+  `openExtendedMenu(ServerPlayer, ExtendedMenuDataProvider)`.
+- `ExtendedMenuProvider` - use `ExtendedMenuDataProvider`.
+
+To migrate, define a `StreamCodec` for the data you were writing into the buffer by hand, and read
+the decoded value in the menu factory instead of the buffer.
+:::
 
 :::note
 This page covers the server-side menu type and opening logic. To bind a **screen** (the client

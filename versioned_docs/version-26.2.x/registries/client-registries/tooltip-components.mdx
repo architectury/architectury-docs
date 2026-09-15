@@ -1,0 +1,28 @@
+---
+sidebar_position: 6
+title: Tooltip Components
+---
+
+# Tooltip Components
+
+`dev.architectury.registry.client.gui.ClientTooltipComponentRegistry`
+
+Render custom tooltip content. A `TooltipComponent` is the data; a `ClientTooltipComponent` knows
+how to draw it. This registry maps one to the other.
+
+## Registering a factory
+
+```java
+ClientTooltipComponentRegistry.register(MyTooltipData.class, MyClientTooltipComponent::new);
+```
+
+- The first argument is your `TooltipComponent` data class.
+- The second is a factory turning that data into a `ClientTooltipComponent` for drawing.
+
+Register from client-side code.
+
+:::note
+To simply add **text** lines to an item tooltip, you don't need this - use
+[`ClientTooltipEvent.ITEM`](../../events/client/client-tooltip-events.mdx). This registry is for
+custom, drawn tooltip content (icons, bars, etc.).
+:::

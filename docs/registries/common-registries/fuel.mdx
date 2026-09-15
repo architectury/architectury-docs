@@ -26,7 +26,23 @@ The first argument is the burn time in ticks. Two values are special:
 
 Call this from your common initializer.
 
+## Smelting speed
+
+An overload takes a speed multiplier, controlling how fast the fuel smelts. `1.0` is the normal
+speed, so `register(int, ItemLike...)` is equivalent to passing `1.0F`.
+
+```java
+// Ruby burns for 200 ticks and smelts twice as fast:
+FuelRegistry.register(200, 2.0F, MyMod.RUBY.get());
+```
+
 ## Reading a burn time
 
-`FuelRegistry.get(ItemStack stack, RecipeType<?> recipeType, FuelValues fuelValues)` returns the
-burn time of a stack (or `0` if it isn't a fuel), taking registered overrides into account.
+`FuelRegistry.get(ItemStack stack, ServerLevel level)` returns the burn time of a stack (or `0` if
+it isn't a fuel), taking registered overrides into account. The level is used to resolve the stack's
+cooking fuel component.
+
+:::info[Changed in 22.0]
+`get` previously took a `RecipeType<?>` and a `FuelValues`. Both were replaced by the `ServerLevel`
+in Architectury API **22.0**.
+:::

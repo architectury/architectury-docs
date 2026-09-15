@@ -1,0 +1,29 @@
+---
+sidebar_position: 4
+title: Block Colors
+---
+
+# Block Colors
+
+`dev.architectury.registry.client.rendering.ColorHandlerRegistry`
+
+Apply a tint to a block's rendering - the mechanism vanilla uses for things like grass and leaves
+changing color by biome.
+
+## Registering a block tint
+
+Pass a `BlockTintSource` and the blocks it applies to:
+
+```java
+ColorHandlerRegistry.registerBlockColors(myTintSource, MyMod.MY_LEAVES.get());
+```
+
+There are two overloads - one takes `Block...` directly, the other takes
+`Supplier<? extends Block>...` so you can pass your `RegistrySupplier`s without resolving them
+first:
+
+```java
+ColorHandlerRegistry.registerBlockColors(myTintSource, MyMod.MY_LEAVES, MyMod.MY_GRASS);
+```
+
+Register from client-side code.

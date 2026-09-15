@@ -1,0 +1,35 @@
+---
+sidebar_position: 4
+title: NeoForge Event Bus
+---
+
+# NeoForge Event Bus
+
+`dev.architectury.platform.hooks.EventBusesHooks`
+
+:::warning[NeoForge only]
+This class lives in the **`neoforge`** subproject, not in common. Use it only from NeoForge-specific
+code - for example, inside a NeoForge platform implementation. It does not exist on Fabric.
+:::
+
+Some NeoForge APIs are registered against a mod's `IEventBus`. `EventBusesHooks` gives you that
+bus by mod id.
+
+## Running code with the bus
+
+```java
+EventBusesHooks.whenAvailable("modid", bus -> {
+    bus.register(MyNeoForgeEventHandler.class);
+});
+```
+
+`whenAvailable` looks up the mod's event bus and passes it to your consumer, throwing if the mod
+isn't available.
+
+## Getting the bus directly
+
+```java
+Optional<IEventBus> bus = EventBusesHooks.getModEventBus("modid");
+```
+
+Returns the mod's `IEventBus`, or an empty optional if the mod has no container.

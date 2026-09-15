@@ -1,0 +1,10 @@
+{
+  "label": "Common Events",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "slug": "/events/common",
+    "title": "Common Events",
+    "description": "Events that fire on the logical server and in the game world. Register these from your common initializer so they apply on both Fabric and NeoForge."
+  }
+}

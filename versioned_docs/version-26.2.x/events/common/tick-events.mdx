@@ -1,0 +1,43 @@
+---
+sidebar_position: 2
+title: Tick Events
+---
+
+# Tick Events
+
+`dev.architectury.event.events.common.TickEvent`
+
+Fires every game tick on the server. Each event has a **PRE** variant (before the tick is
+processed) and a **POST** variant (after). All are notifications.
+
+## Events
+
+| Event | Listener receives | When |
+|---|---|---|
+| `SERVER_PRE` / `SERVER_POST` | `MinecraftServer` | Around each server tick. |
+| `SERVER_LEVEL_PRE` / `SERVER_LEVEL_POST` | `ServerLevel` | Around each server level tick. |
+| `PLAYER_PRE` / `PLAYER_POST` | `Player` | Around each player tick. |
+
+Every listener implements a single `tick(instance)` method, where `instance` is the type in the
+table above.
+
+## Example
+
+```java
+TickEvent.SERVER_POST.register(server -> {
+    // runs 20 times per second on the server thread
+});
+
+TickEvent.PLAYER_PRE.register(player -> {
+    // runs every tick for each player
+});
+```
+
+:::warning[Keep tick listeners cheap]
+These run extremely often. Avoid heavy work directly inside a tick listener - it runs for every
+server tick (or every player, every tick).
+:::
+
+:::note
+For client ticks, see [Client Tick Events](../client/client-tick-events.mdx).
+:::

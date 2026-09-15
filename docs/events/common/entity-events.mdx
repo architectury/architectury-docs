@@ -38,11 +38,6 @@ These can't be cancelled - they tell you something happened.
 | `STOP_TRACKING` | `stopTracking(Entity, ServerPlayer)` | A player stopped tracking an entity. |
 | `ENTER_SECTION` | `enterSection(Entity, int sectionX, sectionY, sectionZ, int prevX, prevY, prevZ)` | An entity moved into a new chunk section. |
 
-:::info[Added in 21.1]
-`LIVING_FALL`, `MOUNT`, `LIVING_DAMAGE_POST`, `REMOVE`, `EQUIPMENT_CHANGE`,
-`START_TRACKING` and `STOP_TRACKING` were added in Architectury API **21.1**.
-:::
-
 :::note
 `LIVING_HURT` lets you **cancel** damage, but you currently cannot change the damage amount.
 `LIVING_CHECK_SPAWN` concerns natural/spawner spawning and worldgen; the `spawner` argument may

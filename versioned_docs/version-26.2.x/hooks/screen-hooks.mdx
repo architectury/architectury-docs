@@ -1,0 +1,53 @@
+---
+sidebar_position: 5
+title: Screen Hooks
+---
+
+# Screen Hooks
+
+Add and inspect widgets on a `Screen` - the cross-platform way to extend vanilla (or other mods')
+GUIs. **Client-only.**
+
+## ScreenAccess
+
+`dev.architectury.hooks.client.screen.ScreenAccess`
+
+A `ScreenAccess` is handed to you by the screen-init events
+([`ClientGuiEvent.INIT_PRE` / `INIT_POST`](../events/client/client-gui-events.mdx)). It lets you
+add widgets to a screen as it initializes:
+
+| Method | Description |
+|---|---|
+| `getScreen()` | The screen being accessed. |
+| `addRenderableWidget(widget)` | Add a widget that renders, handles input, and is narratable. |
+| `addRenderableOnly(renderable)` | Add something that only renders. |
+| `addWidget(listener)` | Add an input/narration listener (no rendering). |
+| `getRenderables()` / `getNarratables()` | The screen's current renderables / narratables. |
+
+```java
+ClientGuiEvent.INIT_POST.register((screen, access) -> {
+    if (screen instanceof TitleScreen) {
+        access.addRenderableWidget(Button.builder(
+                Component.literal("My Button"),
+                btn -> { /* ... */ })
+            .bounds(10, 10, 100, 20)
+            .build());
+    }
+});
+```
+
+## ScreenHooks
+
+`dev.architectury.hooks.client.screen.ScreenHooks`
+
+The same operations as static methods taking the `Screen` directly - useful when you have a
+screen but not a `ScreenAccess`:
+
+```java
+ScreenHooks.addRenderableWidget(screen, myWidget);
+ScreenHooks.addRenderableOnly(screen, myRenderable);
+ScreenHooks.addWidget(screen, myListener);
+
+List<Renderable> renderables = ScreenHooks.getRenderables(screen);
+List<NarratableEntry> narratables = ScreenHooks.getNarratables(screen);
+```

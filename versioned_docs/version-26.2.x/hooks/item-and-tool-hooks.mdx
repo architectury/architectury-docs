@@ -1,0 +1,65 @@
+---
+sidebar_position: 1
+title: Item & Tool Hooks
+---
+
+# Item & Tool Hooks
+
+## ItemStackHooks
+
+`dev.architectury.hooks.item.ItemStackHooks`
+
+| Method | Description |
+|---|---|
+| `copyWithCount(ItemStack, int)` | A copy of the stack with a different count. |
+| `giveItem(ServerPlayer, ItemStack)` | Add the stack to the player's inventory, dropping the remainder if it's full. |
+| `hasCraftingRemainingItem(ItemStack)` | Whether the stack leaves a remainder after crafting (stack-aware only on NeoForge). |
+| `getCraftingRemainingItem(ItemStack)` | The remainder stack left after crafting. |
+
+```java
+ItemStack three = ItemStackHooks.copyWithCount(stack, 3);
+ItemStackHooks.giveItem(serverPlayer, new ItemStack(Items.DIAMOND, 5));
+```
+
+## Tool interactions
+
+These add the vanilla right-click tool behaviors to your own blocks, in one cross-platform call.
+Register them from your common initializer.
+
+### AxeItemHooks
+
+`dev.architectury.hooks.item.tool.AxeItemHooks`
+
+```java
+AxeItemHooks.addStrippable(MyBlocks.WAXED_LOG.get(), MyBlocks.STRIPPED_LOG.get());
+```
+
+Adds an axe **stripping** interaction. Both blocks must have the `AXIS` property (the axis is
+copied from input to result); otherwise this throws.
+
+### ShovelItemHooks
+
+`dev.architectury.hooks.item.tool.ShovelItemHooks`
+
+```java
+ShovelItemHooks.addFlattenable(MyBlocks.ASH_BLOCK.get(), MyBlocks.ASH_PATH.get().defaultBlockState());
+```
+
+Adds a shovel **flattening** (path) interaction. A block can only be flattened if there's no
+block directly above it.
+
+### HoeItemHooks
+
+`dev.architectury.hooks.item.tool.HoeItemHooks`
+
+```java
+HoeItemHooks.addTillable(
+    MyBlocks.ROUGH_DIRT.get(),
+    context -> true,                                  // Predicate<UseOnContext>
+    context -> { /* extra side effects */ },          // Consumer<UseOnContext>
+    context -> MyBlocks.TILLED_DIRT.get().defaultBlockState() // Function<UseOnContext, BlockState>
+);
+```
+
+Adds a hoe **tilling** interaction: a predicate deciding when it applies, an action to run, and
+the resulting block state.

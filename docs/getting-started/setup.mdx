@@ -16,10 +16,10 @@ Minecraft version work too.
 | Requirement | Version | Notes |
 |---|---|---|
 | **Java** | 25+ | Mojang ship Minecraft 26.1+ with Java 25. |
-| **Minecraft** | 26.2 | |
-| **Fabric Loader** | 0.19.3+ | |
-| **Fabric API** | 0.152.0+ | |
-| **NeoForge** | 26.2.0.1-beta+ | |
+| **Minecraft** | 26.3 | |
+| **Fabric Loader** | 0.19.5+ | |
+| **Fabric API** | 0.160.5+ | |
+| **NeoForge** | 26.3.0.0-beta+ | |
 | **Architectury Loom** | 1.17+ | Starting with Minecraft 26.1, Minecraft is no longer obfuscated, use `loom-no-remap`. |
 | **Architectury Plugin** | 3.5+ | |
 
@@ -109,19 +109,19 @@ archives_name = examplemod
 enabled_platforms = fabric,neoforge
 
 # Minecraft properties
-minecraft_version = 26.2
+minecraft_version = 26.3
 
 # Dependencies
-architectury_api_version = 21.1.8
+architectury_api_version = 22.0.1
 fabric_loader_version = 0.19.5
-fabric_api_version = 0.160.0+26.2
-neoforge_version = 26.2.0.82
+fabric_api_version = 0.160.5+26.3
+neoforge_version = 26.3.0.0-beta
 ```
 
-:::info[Architectury API 21.1]
-21.1 is the current release for Minecraft 26.2 and adds a number of new events. Anything marked
-**Added in 21.1** elsewhere in these docs is unavailable on 21.0.x, so set
-`architectury_api_version` to at least `21.1` to use it.
+:::info[Architectury API 22]
+22.0 is the current release for Minecraft 26.3. It contains breaking changes relative to the
+21.x releases for Minecraft 26.2; see [Porting from 26.2 to 26.3](../porting/port-26.2-26.3.mdx) for the
+full list.
 :::
 
 Add the Architectury Maven repository to `settings.gradle` and include the subprojects:

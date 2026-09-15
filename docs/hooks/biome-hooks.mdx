@@ -65,6 +65,11 @@ properties.getGenerationProperties()
 - `addCarver(Holder/ResourceKey)` / `removeCarver(ResourceKey)`
 - Read with `getFeatures()`, `getFeatures(decoration)`, `getCarvers()`.
 
+:::info[Changed in 22.0]
+Carvers are now typed as `WorldCarver` rather than `ConfiguredWorldCarver<?>`, following the
+Minecraft 26.3 rename. Every carver method on this interface changed accordingly.
+:::
+
 ### SpawnProperties.Mutable
 
 ```java
@@ -81,3 +86,16 @@ To actually apply these changes to biomes, use
 [Biome Modifications](../registries/common-registries/biome-modifications.mdx) - it hands your callback the
 `BiomeProperties.Mutable` shown here.
 :::
+
+## Reading spawns off a biome directly
+
+In Minecraft 26.3 a biome's natural mob spawns and its world gen creature spawn probability are
+stored as environment attributes rather than on the biome itself. `BiomeHooks` exposes them:
+
+```java
+MobSpawnSettings spawns = BiomeHooks.extractMobSpawnSettings(biome);
+float probability = BiomeHooks.extractCreatureProbability(biome);
+```
+
+Both were added in Architectury API **22.0**, and replace the vanilla `Biome#getMobSettings()` and
+`MobSpawnSettings#getCreatureProbability()` calls that no longer exist.

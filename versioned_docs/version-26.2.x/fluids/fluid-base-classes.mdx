@@ -1,0 +1,148 @@
+---
+sidebar_position: 1
+title: Fluid Base Classes
+---
+
+# Fluid Base Classes
+
+The classes in `dev.architectury.core.fluid` (plus the matching block and item) are what you
+extend or instantiate to build a custom fluid from common code. [Creating a Custom
+Fluid](./custom-fluids.mdx) is the step-by-step guide; this page is the reference for each class.
+
+A fluid is described once by an `ArchitecturyFluidAttributes`, then four registered objects share
+it: a source fluid, a flowing fluid, a liquid block, and a bucket item.
+
+## `SimpleArchitecturyFluidAttributes`
+
+The builder you use to describe a fluid. Create it from the flowing and source fluids, then chain
+setters; the result is an `ArchitecturyFluidAttributes` you pass to everything else.
+
+### Factory methods
+
+| Method | Use |
+|---|---|
+| `of(Supplier<? extends Fluid> flowing, Supplier<? extends Fluid> source)` | Pass suppliers that return the fluids. |
+| `ofSupplier(Supplier<? extends Supplier<? extends Fluid>> flowing, Supplier<? extends Supplier<? extends Fluid>> source)` | Pass suppliers **of** your `RegistrySupplier` fields - convenient when the fluids are registered in the same class. |
+
+```java
+public static final ArchitecturyFluidAttributes OIL_ATTRIBUTES =
+    SimpleArchitecturyFluidAttributes.ofSupplier(() -> OIL_FLOWING, () -> OIL_STILL)
+        .blockSupplier(() -> OIL_BLOCK)
+        .bucketItem(() -> Optional.of(OIL_BUCKET.get()))
+        .sourceTexture(Identifier.fromNamespaceAndPath(MOD_ID, "block/oil_still"))
+        .flowingTexture(Identifier.fromNamespaceAndPath(MOD_ID, "block/oil_flow"))
+        .viscosity(2000)
+        .convertToSource(false);
+```
+
+### Setters
+
+Every setter returns the builder, so they chain. Defaults are what you get if you don't call them.
+
+| Setter | Type | Default | Meaning |
+|---|---|---|---|
+| `convertToSource(boolean)` | `boolean` | `false` | Whether two adjacent source blocks form a new source block between them. |
+| `slopeFindDistance(int)` | `int` | `4` | How far the fluid looks for a downward slope when flowing. |
+| `dropOff(int)` | `int` | `1` | How much the fluid level drops per block as it spreads. |
+| `tickDelay(int)` | `int` | `5` | Ticks between flow updates; higher values slow the spread. |
+| `explosionResistance(float)` | `float` | `100.0` | Blast resistance of the fluid. |
+| `sourceTexture(Identifier)` | `Identifier` | - | Still texture. |
+| `flowingTexture(Identifier)` | `Identifier` | - | Flowing texture. |
+| `overlayTexture(Identifier)` | `Identifier` | none | Overlay shown against glass/when submerged. |
+| `color(int)` | `int` (ARGB) | `0xffffff` | Tint applied to the textures. |
+| `luminosity(int)` | `int` (0–15) | `0` | Light level the fluid emits. |
+| `density(int)` | `int` | `1000` | Fluid density. |
+| `temperature(int)` | `int` | `300` | Fluid temperature. |
+| `viscosity(int)` | `int` | `1000` | Resistance to flow; higher values flow more slowly. |
+| `lighterThanAir(boolean)` | `boolean` | `false` | If `true`, the fluid rises rather than falls. |
+| `rarity(Rarity)` | `Rarity` | `COMMON` | Rarity of the bucket item. |
+| `fillSound(SoundEvent)` | `SoundEvent` | `BUCKET_FILL` | Sound when filling a bucket. |
+| `emptySound(SoundEvent)` | `SoundEvent` | `BUCKET_EMPTY` | Sound when emptying a bucket. |
+| `block(...)` / `blockSupplier(...)` | see below | empty | The liquid block for this fluid. |
+| `bucketItem(...)` / `bucketItemSupplier(...)` | see below | empty | The bucket item for this fluid. |
+
+The block and bucket links each have a few overloads so you can pass whatever you have - a
+`RegistrySupplier`, a supplier of one, or a supplier of an `Optional`:
+
+| Block | Bucket |
+|---|---|
+| `block(RegistrySupplier<? extends LiquidBlock>)` | `bucketItem(RegistrySupplier<Item>)` |
+| `blockSupplier(Supplier<RegistrySupplier<? extends LiquidBlock>>)` | `bucketItemSupplier(Supplier<RegistrySupplier<? extends Item>>)` |
+| `block(Supplier<? extends Optional<? extends LiquidBlock>>)` | `bucketItem(Supplier<? extends Optional<? extends Item>>)` |
+
+:::note[Use suppliers for the links]
+The attributes reference the block/bucket and those reference the attributes back. Passing
+suppliers (`blockSupplier(() -> OIL_BLOCK)`) lets the references resolve lazily, so field
+initialization order doesn't matter.
+:::
+
+## `ArchitecturyFluidAttributes`
+
+The interface produced by the builder - the type you store in a `static final` field and hand to
+the fluids, block, and bucket. You normally only build it, but it also exposes read accessors if
+you need to inspect a fluid's settings later (for example, to drive your own fluid rendering or
+tooltips): `getName()`, `getColor()`, `getLuminosity(...)`, `getSourceTexture(...)`,
+`getFlowingTexture(...)`, `getBucketItem()`, `getBlock()`, and the rest mirror the setters above.
+
+## `ArchitecturyFlowingFluid`
+
+The fluid itself. Register one of each nested type in `Registries.FLUID`, both taking the shared
+attributes:
+
+| Class | Role |
+|---|---|
+| `ArchitecturyFlowingFluid.Source` | The still/source fluid. |
+| `ArchitecturyFlowingFluid.Flowing` | The flowing fluid. |
+
+```java
+public static final RegistrySupplier<ArchitecturyFlowingFluid.Source> OIL_STILL =
+    FLUIDS.register("oil", () -> new ArchitecturyFlowingFluid.Source(OIL_ATTRIBUTES));
+
+public static final RegistrySupplier<ArchitecturyFlowingFluid.Flowing> OIL_FLOWING =
+    FLUIDS.register("flowing_oil", () -> new ArchitecturyFlowingFluid.Flowing(OIL_ATTRIBUTES));
+```
+
+## `ArchitecturyLiquidBlock`
+
+The block placed in the world for the fluid. Register it in `Registries.BLOCK`.
+
+```java
+ArchitecturyLiquidBlock(Supplier<? extends FlowingFluid> fluid, BlockBehaviour.Properties properties)
+```
+
+```java
+public static final RegistrySupplier<LiquidBlock> OIL_BLOCK = BLOCKS.register("oil", () -> {
+    ResourceKey<Block> key = ResourceKey.create(Registries.BLOCK,
+        Identifier.fromNamespaceAndPath(MOD_ID, "oil"));
+    return new ArchitecturyLiquidBlock(OIL_STILL, BlockBehaviour.Properties.of().liquid().setId(key));
+});
+```
+
+## `ArchitecturyBucketItem`
+
+The bucket item for the fluid. Register it in `Registries.ITEM`, typically with
+`craftRemainder(Items.BUCKET)`.
+
+```java
+ArchitecturyBucketItem(Supplier<? extends Fluid> fluid, Item.Properties properties)
+```
+
+```java
+public static final RegistrySupplier<Item> OIL_BUCKET = ITEMS.register("oil_bucket", () -> {
+    ResourceKey<Item> key = ResourceKey.create(Registries.ITEM,
+        Identifier.fromNamespaceAndPath(MOD_ID, "oil_bucket"));
+    return new ArchitecturyBucketItem(OIL_STILL,
+        new Item.Properties().craftRemainder(Items.BUCKET).setId(key));
+});
+```
+
+`getContainedFluid()` returns the `Fluid` the bucket holds. (You can also read it through the
+injected [`arch$getFluid()`](../other/injected-interfaces.mdx) on any `BucketItem`.)
+
+:::note
+The `setId(...)` on the block and bucket `Properties` is required for every item/block
+registration - see [DeferredRegister](../registries/common-registries/deferred-register.mdx).
+:::
+
+The block, bucket, and fluids behave identically on Fabric and NeoForge - you write and register
+them once, exactly as above.

@@ -53,5 +53,11 @@ use). Handy when you only want to react to genuine players.
 IntValue lifespan = ItemEntityHooks.lifespan(itemEntity);
 ```
 
-`lifespan(ItemEntity)` returns the item entity's lifespan as an `IntValue` you can read (and, on
-NeoForge, modify). On Fabric it's a read-only value of `6000`.
+`lifespan(ItemEntity)` returns the item entity's lifespan in ticks as an `IntValue` you can read and
+modify. The default is `6000`.
+
+:::info[Changed in 22.0]
+On Fabric this was a read-only value of `6000` before Architectury API **22.0**; writes were
+silently discarded. It is now backed by a persistent entity attachment, so setting it works on both
+loaders.
+:::

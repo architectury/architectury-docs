@@ -25,10 +25,6 @@ screens.
 | `SET_SCREEN` | `modifyScreen(Screen)` | `CompoundEventResult<Screen>` - replace the screen about to open. |
 | `SCREEN_CLOSING` | `closing(Screen)` | `void` - a screen is being closed and removed. |
 
-:::info[Added in 21.1]
-`RENDER_BACKGROUND` and `SCREEN_CLOSING` were added in Architectury API **21.1**.
-:::
-
 The render events give you a `GuiGraphicsExtractor` - the drawing context, with methods like
 `pose()`, `fill(...)`, and `text(font, component, x, y, color)`. The `ScreenAccess` passed to the
 `INIT` events lets you add or remove widgets on the screen - see

@@ -1,0 +1,57 @@
+---
+sidebar_position: 3
+title: Entity Spawn Packets
+---
+
+# Entity Spawn Packets
+
+Non-living (and other custom) entities need a spawn packet so the client knows to create them.
+Architectury provides a ready-made one through `NetworkManager`.
+
+## Using the Architectury spawn packet
+
+Override your entity's `getAddEntityPacket` to return `NetworkManager.createAddEntityPacket`:
+
+```java
+public class MyProjectile extends Entity {
+    // ...
+
+    @Override
+    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity serverEntity) {
+        return NetworkManager.createAddEntityPacket(this, serverEntity);
+    }
+}
+```
+
+That's all most entities need - the packet carries the entity type, id, position, rotation, and
+velocity.
+
+## Sending extra spawn data
+
+If your entity needs additional data available the moment it spawns on the client, implement
+`dev.architectury.extensions.network.EntitySpawnExtension`:
+
+```java
+public class MyProjectile extends Entity implements EntitySpawnExtension {
+    private int variant;
+
+    @Override
+    public void saveAdditionalSpawnData(FriendlyByteBuf buf) {
+        buf.writeVarInt(variant);
+    }
+
+    @Override
+    public void loadAdditionalSpawnData(FriendlyByteBuf buf) {
+        this.variant = buf.readVarInt();
+    }
+
+    @Override
+    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity serverEntity) {
+        return NetworkManager.createAddEntityPacket(this, serverEntity);
+    }
+}
+```
+
+`saveAdditionalSpawnData` runs on the server when the spawn packet is built;
+`loadAdditionalSpawnData` runs on the client when it's received. Read the fields back in the same
+order you wrote them.

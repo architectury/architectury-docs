@@ -1,0 +1,10 @@
+{
+  "label": "Hooks",
+  "position": 8,
+  "link": {
+    "type": "generated-index",
+    "slug": "/hooks",
+    "title": "Hooks",
+    "description": "Small cross-platform helpers wrapping vanilla classes that behave differently on Fabric and NeoForge - for items, blocks, entities, biomes, screens, and more. Most are static utility methods you call directly."
+  }
+}

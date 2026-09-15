@@ -1,0 +1,46 @@
+---
+sidebar_position: 2
+title: Renderers & Model Layers
+---
+
+# Renderers & Model Layers
+
+Three registries handle the rendering of custom entities and block entities. Register all of them
+from client-side code.
+
+## Entity renderers
+
+`dev.architectury.registry.client.level.entity.EntityRendererRegistry`
+
+Bind an `EntityRenderer` to your entity type:
+
+```java
+EntityRendererRegistry.register(MyMod.MY_ENTITY, MyEntityRenderer::new);
+```
+
+The first argument is your entity type supplier (the `RegistrySupplier` you got when registering
+the entity); the second is an `EntityRendererProvider<T>`.
+
+## Model layers
+
+`dev.architectury.registry.client.level.entity.EntityModelLayerRegistry`
+
+Register a `LayerDefinition` for a `ModelLayerLocation`, so the model's geometry is available to
+your renderer:
+
+```java
+public static final ModelLayerLocation MY_LAYER =
+    new ModelLayerLocation(Identifier.fromNamespaceAndPath(MyMod.MOD_ID, "my_entity"), "main");
+
+EntityModelLayerRegistry.register(MY_LAYER, MyEntityModel::createBodyLayer);
+```
+
+## Block entity renderers
+
+`dev.architectury.registry.client.rendering.BlockEntityRendererRegistry`
+
+Bind a `BlockEntityRenderer` to your block entity type:
+
+```java
+BlockEntityRendererRegistry.register(MyMod.MY_BLOCK_ENTITY.get(), MyBlockEntityRenderer::new);
+```

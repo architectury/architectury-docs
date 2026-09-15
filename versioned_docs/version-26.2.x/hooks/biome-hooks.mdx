@@ -1,0 +1,83 @@
+---
+sidebar_position: 4
+title: Biome Hooks
+---
+
+# Biome Hooks
+
+`dev.architectury.hooks.level.biome.BiomeHooks`
+
+Read a biome's properties through a cross-platform view.
+
+```java
+BiomeProperties properties = BiomeHooks.getBiomeProperties(biome);
+```
+
+## BiomeProperties
+
+`dev.architectury.hooks.level.biome.BiomeProperties` groups a biome's settings into four
+categories:
+
+| Accessor | Returns |
+|---|---|
+| `getClimateProperties()` | Temperature, downfall, precipitation. |
+| `getEffectsProperties()` | Colors (water, foliage, grass) and modifiers. |
+| `getGenerationProperties()` | Carvers and placed features. |
+| `getSpawnProperties()` | Mob spawn entries and costs. |
+
+Each category also has a **`Mutable`** sub-interface for changing it. You don't usually construct
+these yourself - you receive a `BiomeProperties.Mutable` inside a
+[Biome Modification](../registries/common-registries/biome-modifications.mdx) callback. This page documents what
+that mutable view exposes.
+
+### ClimateProperties.Mutable
+
+```java
+properties.getClimateProperties()
+    .setTemperature(0.8f)
+    .setDownfall(0.4f)
+    .setHasPrecipitation(true);
+```
+
+Read with `getTemperature()`, `getDownfall()`, `hasPrecipitation()`, `getTemperatureModifier()`;
+write with `setTemperature`, `setDownfall`, `setHasPrecipitation`, `setTemperatureModifier`.
+
+### EffectsProperties.Mutable
+
+```java
+properties.getEffectsProperties()
+    .setWaterColor(0x3F76E4)
+    .setGrassColorOverride(0x80B497);
+```
+
+Set `setWaterColor`, `setFoliageColorOverride`, `setDryFoliageColorOverride`,
+`setGrassColorOverride`, and `setGrassColorModifier`. Each has a matching getter.
+
+### GenerationProperties.Mutable
+
+```java
+properties.getGenerationProperties()
+    .addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, myPlacedFeature)
+    .addCarver(myCarver);
+```
+
+- `addFeature(decoration, Holder/ResourceKey)` / `removeFeature(decoration, ResourceKey)`
+- `addCarver(Holder/ResourceKey)` / `removeCarver(ResourceKey)`
+- Read with `getFeatures()`, `getFeatures(decoration)`, `getCarvers()`.
+
+### SpawnProperties.Mutable
+
+```java
+properties.getSpawnProperties()
+    .addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(MyEntities.DEER.get(), 10, 2, 4), 10);
+```
+
+- `addSpawn(category, SpawnerData, weight)` / `removeSpawns(predicate)`
+- `setCreatureProbability(float)`
+- `setSpawnCost(entityType, cost)` / `setSpawnCost(entityType, charge, energyBudget)` / `clearSpawnCost(entityType)`
+
+:::note
+To actually apply these changes to biomes, use
+[Biome Modifications](../registries/common-registries/biome-modifications.mdx) - it hands your callback the
+`BiomeProperties.Mutable` shown here.
+:::

@@ -1,0 +1,102 @@
+---
+sidebar_position: 12
+title: Client Level Render Events
+---
+
+# Client Level Render Events
+
+`dev.architectury.event.events.client.ClientLevelRenderEvent`
+
+Fires at fixed points of the level render, letting you draw into the world without injecting
+into `LevelRenderer#renderLevel` yourself. All of these are notifications; none of them can be
+cancelled.
+
+:::info[Added in 21.1]
+`ClientLevelRenderEvent` was added in Architectury API **21.1**.
+:::
+
+## How a frame is put together
+
+Vanilla splits a frame into two phases:
+
+1. **Extraction** walks the level and gathers everything that will be drawn into a
+   `LevelRenderState`.
+2. **Drawing** turns that state into draw calls, in a fixed sequence of stages.
+
+Gather the data you need in `END_EXTRACTION` and draw it in one of the stages below.
+
+## Events
+
+| Event | Listener method | When |
+|---|---|---|
+| `END_EXTRACTION` | `extract(ExtractionContext)` | Every vanilla render state has been extracted, before anything is drawn. |
+| `AFTER_OPAQUE_BLOCKS` | `render(RenderContext)` | Solid and cutout chunk geometry has been drawn. |
+| `COLLECT_SUBMITS` | `collectSubmits(SubmitContext)` | Entities, block entities and particles have added their submit nodes, before any of it is drawn. |
+| `AFTER_OPAQUE_FEATURES` | `render(StageContext)` | The solid geometry submitted by entities, block entities and particles has been drawn. |
+| `AFTER_TRANSLUCENT_FEATURES` | `render(StageContext)` | The translucent geometry submitted by entities and block entities has been drawn. |
+| `AFTER_TRANSLUCENT_BLOCKS` | `render(StageContext)` | Translucent chunk geometry has been drawn. |
+| `AFTER_TRANSLUCENT_PARTICLES` | `render(StageContext)` | Translucent particles have been drawn, at the very end of the main pass. |
+
+The drawing stages fire in the order they are listed. `AFTER_TRANSLUCENT_FEATURES` does not
+include translucent particles, which are drawn much later.
+`AFTER_TRANSLUCENT_PARTICLES` is the last hook in the main pass, before clouds, weather and late
+debug are drawn.
+
+## Contexts
+
+Each event hands your listener a context object. They form a small hierarchy, so a listener on a
+later stage can reach everything an earlier one could.
+
+| Context | Extends | Accessors |
+|---|---|---|
+| `RenderContext` | - | `levelRenderer()`, `levelRenderState()` |
+| `StageContext` | `RenderContext` | `poseStack()` |
+| `SubmitContext` | `StageContext` | `submitNodeCollector()` |
+| `ExtractionContext` | `RenderContext` | `level()`, `camera()`, `deltaTracker()` |
+
+`AFTER_OPAQUE_BLOCKS` receives the smaller `RenderContext` because neither loader has a pose
+stack in hand at that point. Set up your own `PoseStack` there if you need one.
+
+:::note[Submit geometry rather than drawing it]
+In `COLLECT_SUBMITS`, add your geometry to `context.submitNodeCollector()` instead of issuing
+draw calls directly. Doing so lets the game batch and sort your geometry along with everything
+else it is about to draw.
+:::
+
+## Examples
+
+Prepare per-frame data during extraction, then draw it after translucent blocks:
+
+```java
+ClientLevelRenderEvent.END_EXTRACTION.register(context -> {
+    ClientLevel level = context.level();
+    Camera camera = context.camera();
+    // work out what you want to draw this frame and stash it
+});
+
+ClientLevelRenderEvent.AFTER_TRANSLUCENT_BLOCKS.register(context -> {
+    PoseStack poseStack = context.poseStack();
+    // draw your translucent world geometry here
+});
+```
+
+Submit custom geometry so it is batched with everything else:
+
+```java
+ClientLevelRenderEvent.COLLECT_SUBMITS.register(context -> {
+    SubmitNodeCollector collector = context.submitNodeCollector();
+    // add your nodes to `collector`
+});
+```
+
+:::warning[Only the shared stages are exposed]
+Only the positions that **both** NeoForge and Fabric fire at are available here. NeoForge's
+`AfterSky`, `AfterWeather` and `AfterLevel` stages, and Fabric's `START_MAIN`, `BEFORE_GIZMOS`,
+`BEFORE_TRANSLUCENT_TERRAIN` and block outline events, have no counterpart on the other loader
+and are not mirrored. Use the loader's own event for those.
+:::
+
+:::note
+These events fire every frame. Keep the work in your listeners small, and register them only
+from client-side code.
+:::

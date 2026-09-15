@@ -1,0 +1,87 @@
+---
+sidebar_position: 2
+title: Project Structure
+---
+
+# Project Structure
+
+An Architectury mod is split into subprojects - one shared module plus one per loader you
+target. Understanding what belongs where is the key to working productively.
+
+## The subprojects
+
+| Subproject | Contains |
+|---|---|
+| `common` | Your actual mod logic, written against the **common** API. This is the bulk of your code. |
+| `fabric` | The Fabric entrypoint and any Fabric-only implementations. |
+| `neoforge` | The NeoForge entrypoint and any NeoForge-only implementations. |
+
+The goal is to put **as much as possible in `common`** and keep the platform modules thin -
+ideally just the loader entrypoint that calls into your common initializer.
+
+```
+my-mod/
+├── common/      -> shared code + shared resources 
+├── fabric/      -> Fabric entrypoint (fabric.mod.json + initializer)
+└── neoforge/    -> NeoForge entrypoint (neoforge.mods.toml + initializer)
+```
+
+## Where your code goes
+
+Write your features in `common` using the Architectury API. For example, registering an item
+or listening to an event is done **once** in common and works on both loaders:
+
+```java title="common/.../MyMod.java"
+public final class MyMod {
+    public static final String MOD_ID = "mymod";
+
+    // Runs from both the Fabric and NeoForge entrypoints.
+    public static void init() {
+        PlayerEvent.PLAYER_JOIN.register(player -> {
+            player.sendSystemMessage(Component.literal("Welcome to my mod!"));
+        });
+    }
+}
+```
+
+Each platform module then has a tiny entrypoint that calls `MyMod.init()`:
+
+```java title="fabric/.../MyModFabric.java"
+public final class MyModFabric implements ModInitializer {
+    @Override
+    public void onInitialize() {
+        MyMod.init();
+    }
+}
+```
+
+```java title="neoforge/.../MyModNeoForge.java"
+@Mod(MyMod.MOD_ID)
+public final class MyModNeoForge {
+    public MyModNeoForge() {
+        MyMod.init();
+    }
+}
+```
+
+## Building and running
+
+From the project root, use the Gradle wrapper:
+
+```bash
+# Build every platform jar (outputs to fabric/build/libs and neoforge/build/libs)
+./gradlew build
+
+# Launch a development client for a specific loader
+./gradlew :fabric:runClient
+./gradlew :neoforge:runClient
+
+# Launch a dedicated server
+./gradlew :fabric:runServer
+./gradlew :neoforge:runServer
+```
+
+:::info[Build outputs]
+The finished, distributable jars are the ones in `common/build/libs`, `fabric/build/libs` and `neoforge/build/libs`
+(the files **without** the `-dev` or `-sources` suffix).
+:::

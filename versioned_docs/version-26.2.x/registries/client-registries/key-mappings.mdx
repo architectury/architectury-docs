@@ -1,0 +1,38 @@
+---
+sidebar_position: 5
+title: Key Mappings
+---
+
+# Key Mappings
+
+`dev.architectury.registry.client.keymappings.KeyMappingRegistry`
+
+Register a configurable hotkey (a `KeyMapping`) that appears in the vanilla Controls screen.
+
+## Registering a key
+
+```java
+public static final KeyMapping MY_KEY = new KeyMapping(
+    "key.mymod.do_thing",          // translation key for the binding's name
+    GLFW.GLFW_KEY_K,               // default key
+    "key.categories.mymod"         // translation key for the category
+);
+
+KeyMappingRegistry.register(MY_KEY);
+```
+
+Register from client-side code.
+
+## Reacting to the key
+
+Check the mapping during a client tick - `consumeClick()` returns `true` once per press:
+
+```java
+ClientTickEvent.CLIENT_POST.register(minecraft -> {
+    while (MY_KEY.consumeClick()) {
+        // the player pressed your key
+    }
+});
+```
+
+See [Client Tick Events](../../events/client/client-tick-events.mdx).

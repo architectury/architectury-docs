@@ -1,0 +1,49 @@
+---
+sidebar_position: 2
+title: Mod Metadata
+---
+
+# Mod Metadata
+
+`dev.architectury.platform.Mod`
+
+A `Mod` is a cross-platform container for another mod's metadata - the same information from
+`fabric.mod.json` or `neoforge.mods.toml`, read through one interface. Get one from
+[`Platform.getMod(id)`](./platform-class.mdx).
+
+```java
+Mod mod = Platform.getMod("mymod");
+
+String id      = mod.getModId();
+String version = mod.getVersion();
+String name    = mod.getName();
+String desc    = mod.getDescription();
+```
+
+## Available metadata
+
+| Method | Returns |
+|---|---|
+| `getModId()` | The mod id. |
+| `getVersion()` | The version string. |
+| `getName()` | The display name. |
+| `getDescription()` | The description. |
+| `getAuthors()` | The authors. |
+| `getLicense()` | The license(s) - may be `null`. |
+| `getHomepage()` | `Optional<String>` homepage URL. |
+| `getSources()` | `Optional<String>` sources URL. |
+| `getIssueTracker()` | `Optional<String>` issue-tracker URL. |
+| `getLogoFile(int preferredSize)` | `Optional<String>` path to the logo (the size hint is only used on Fabric). |
+
+## Files and resources
+
+```java
+// All root paths of the mod (a Fabric mod can have several source sets):
+List<Path> roots = mod.getFilePaths();
+
+// Locate a resource bundled in the mod, if present:
+Optional<Path> path = mod.findResource("data", "mymod", "extra.json");
+```
+
+`findResource` joins the path segments, checks the resource exists, and returns its `Path` (or an
+empty optional if it doesn't).

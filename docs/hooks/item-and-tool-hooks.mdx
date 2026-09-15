@@ -23,43 +23,53 @@ ItemStackHooks.giveItem(serverPlayer, new ItemStack(Items.DIAMOND, 5));
 
 ## Tool interactions
 
-These add the vanilla right-click tool behaviors to your own blocks, in one cross-platform call.
-Register them from your common initializer.
+`dev.architectury.hooks.item.tool.BlockTransformerHooks`
 
-### AxeItemHooks
+These add the vanilla right-click tool behaviors - stripping, flattening and tilling - to your own
+blocks, in one cross-platform call. Register them from your common initializer.
 
-`dev.architectury.hooks.item.tool.AxeItemHooks`
+Since Minecraft 26.3 these interactions are driven by the vanilla block transformers
+(`net.minecraft.core.component.BlockTransformer`), and flattening and tilling are additionally tag
+driven. Adding a block to the `minecraft:turns_into_dirt_path` or
+`minecraft:turns_into_farmland` block tag in a data pack makes it flattenable or tillable, requires
+no code, and behaves identically on both loaders. Prefer the tags; the hooks below exist for the
+cases the tags cannot express, namely a result state other than dirt path or farmland.
 
-```java
-AxeItemHooks.addStrippable(MyBlocks.WAXED_LOG.get(), MyBlocks.STRIPPED_LOG.get());
-```
-
-Adds an axe **stripping** interaction. Both blocks must have the `AXIS` property (the axis is
-copied from input to result); otherwise this throws.
-
-### ShovelItemHooks
-
-`dev.architectury.hooks.item.tool.ShovelItemHooks`
+### Stripping
 
 ```java
-ShovelItemHooks.addFlattenable(MyBlocks.ASH_BLOCK.get(), MyBlocks.ASH_PATH.get().defaultBlockState());
+BlockTransformerHooks.addStrippable(MyBlocks.WAXED_LOG.get(), MyBlocks.STRIPPED_LOG.get());
 ```
 
-Adds a shovel **flattening** (path) interaction. A block can only be flattened if there's no
+Adds an axe **stripping** interaction. Block state properties shared by the two blocks, such as
+`AXIS`, are carried over from the input to the result; neither block is required to have any
+particular property. Stripping has no equivalent block tag, because every input block maps to a
+different result, so this is the only way to add one without replacing the whole vanilla axe
+transformer.
+
+### Flattening
+
+```java
+BlockTransformerHooks.addFlattenable(MyBlocks.ASH_BLOCK.get(), MyBlocks.ASH_PATH.get().defaultBlockState());
+```
+
+Adds a shovel **flattening** (path) interaction. Prefer the `minecraft:turns_into_dirt_path` block
+tag unless the result is a state other than dirt path. A block can only be flattened if there is no
 block directly above it.
 
-### HoeItemHooks
-
-`dev.architectury.hooks.item.tool.HoeItemHooks`
+### Tilling
 
 ```java
-HoeItemHooks.addTillable(
-    MyBlocks.ROUGH_DIRT.get(),
-    context -> true,                                  // Predicate<UseOnContext>
-    context -> { /* extra side effects */ },          // Consumer<UseOnContext>
-    context -> MyBlocks.TILLED_DIRT.get().defaultBlockState() // Function<UseOnContext, BlockState>
-);
+BlockTransformerHooks.addTillable(MyBlocks.ROUGH_DIRT.get(), MyBlocks.TILLED_DIRT.get().defaultBlockState());
 ```
 
-Adds a hoe **tilling** interaction: a predicate deciding when it applies, an action to run, and
-the resulting block state.
+Adds a hoe **tilling** interaction. Prefer the `minecraft:turns_into_farmland` block tag unless the
+result is a state other than farmland. A block can only be tilled if there is no block directly
+above it.
+
+:::info[Renamed in 22.0]
+`BlockTransformerHooks` replaces `AxeItemHooks`, `ShovelItemHooks` and `HoeItemHooks`, which were
+removed in Architectury API **22.0**. `HoeItemHooks.addTillable` took a predicate, an action and a
+state function; the replacement takes a single result state, because the vanilla block transformers
+no longer support arbitrary per-use logic.
+:::

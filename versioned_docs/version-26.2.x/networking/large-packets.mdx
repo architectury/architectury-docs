@@ -1,0 +1,49 @@
+---
+sidebar_position: 4
+title: Large Packets
+---
+
+# Large Packets
+
+Minecraft limits the size of a single custom packet. If a payload can exceed that limit, attach a
+**`SplitPacketTransformer`**, which transparently splits the payload on send and reassembles it on
+receive.
+
+## Adding a split transformer
+
+Both the registration overloads accept a `List<PacketTransformer>`. Add a `SplitPacketTransformer`
+to it on **both** sides of the connection.
+
+For a C2S packet:
+
+```java
+NetworkManager.registerReceiver(NetworkManager.Side.C2S,
+    BigDataPayload.TYPE, BigDataPayload.CODEC,
+    List.of(new SplitPacketTransformer()),
+    (payload, context) -> context.queue(() -> {
+        // handle the (reassembled) payload
+    }));
+```
+
+For an S2C packet, add it to both the type declaration and the client receiver:
+
+```java
+// Server: declare the type with the transformer
+NetworkManager.registerS2CPayloadType(BigDataPayload.TYPE, BigDataPayload.CODEC,
+    List.of(new SplitPacketTransformer()));
+
+// Client: register the receiver with the transformer
+NetworkManager.registerReceiver(NetworkManager.Side.S2C,
+    BigDataPayload.TYPE, BigDataPayload.CODEC,
+    List.of(new SplitPacketTransformer()),
+    (payload, context) -> context.queue(() -> { /* ... */ }));
+```
+
+Sending is unchanged - call `sendToServer` / `sendToPlayer` as usual; the transformer handles the
+splitting.
+
+:::note[Experimental]
+The packet-transformer overloads are marked experimental and may change. `SplitPacketTransformer`
+is the ready-made transformer for oversized packets; `PacketTransformer` is the general interface
+behind it if you ever need custom byte-level transformation.
+:::

@@ -19,10 +19,6 @@ Events about blocks being broken, placed, landed on by a falling block, or moved
 | `PISTON_PRE` | `piston(Level, BlockPos, Direction, boolean extending)` | `EventResult` - interrupt to stop the piston moving. |
 | `PISTON_POST` | `piston(Level, BlockPos, Direction, boolean extending)` | `void` (notification). |
 
-:::info[Added in 21.1]
-`PISTON_PRE` and `PISTON_POST` were added in Architectury API **21.1**.
-:::
-
 For `PLACE`, the `placer` may be `null` (for example, when a dispenser places the block).
 
 ## Piston events

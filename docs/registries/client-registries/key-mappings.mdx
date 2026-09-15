@@ -12,16 +12,23 @@ Register a configurable hotkey (a `KeyMapping`) that appears in the vanilla Cont
 ## Registering a key
 
 ```java
+// Categories are registered objects, identified by a namespaced id:
+public static final KeyMapping.Category MY_CATEGORY =
+    KeyMapping.Category.register(Identifier.fromNamespaceAndPath(MyMod.MOD_ID, "main"));
+
 public static final KeyMapping MY_KEY = new KeyMapping(
     "key.mymod.do_thing",          // translation key for the binding's name
-    GLFW.GLFW_KEY_K,               // default key
-    "key.categories.mymod"         // translation key for the category
+    InputConstants.Type.KEYBOARD,  // input device
+    InputConstants.KEY_K,          // default key
+    MY_CATEGORY
 );
 
 KeyMappingRegistry.register(MY_KEY);
 ```
 
-Register from client-side code.
+Register from client-side code. Since Minecraft 26.3 a category is a registered `KeyMapping.Category`
+identified by a namespaced id, rather than a raw translation key string; vanilla derives the name
+shown in the Controls screen from that id.
 
 ## Reacting to the key
 
@@ -36,3 +43,9 @@ ClientTickEvent.CLIENT_POST.register(minecraft -> {
 ```
 
 See [Client Tick Events](../../events/client/client-tick-events.mdx).
+
+:::info[Changed in 26.3]
+`InputConstants.Type.KEYSYM` was renamed to `InputConstants.Type.KEYBOARD` in Minecraft 26.3. Key
+codes are available as `InputConstants.KEY_*` constants, so a direct `GLFW` dependency is no longer
+needed.
+:::

@@ -1,0 +1,35 @@
+---
+sidebar_position: 3
+title: Particles
+---
+
+# Particles
+
+`dev.architectury.registry.client.particle.ParticleProviderRegistry`
+
+Register the `ParticleProvider` that renders a custom particle type.
+
+## Registering a provider
+
+The easiest overloads take the `RegistrySupplier` for your particle type and handle the timing
+for you:
+
+```java
+// A provider that doesn't need the sprite set:
+ParticleProviderRegistry.register(MyMod.MY_PARTICLE, MyParticle.Provider::new);
+
+// A provider that needs the sprite set:
+ParticleProviderRegistry.register(MyMod.MY_PARTICLE, spriteSet -> new MyParticle.Provider(spriteSet));
+```
+
+The second form uses a `DeferredParticleProvider<T>`, whose `create(ExtendedSpriteSet)` gives you
+the sprite set (and, through it, the atlas and sprite list) to build your provider.
+
+There are also overloads taking a resolved `ParticleType<T>` directly, if you're listening for
+your particle type's registration yourself.
+
+:::warning[Register early]
+Register particle providers **before** `ClientLifecycleEvent.CLIENT_SETUP`. Registering them
+later can fail to wire up correctly on NeoForge. Using the `RegistrySupplier` overloads above is
+the safe option, since they listen for registration at the right time.
+:::

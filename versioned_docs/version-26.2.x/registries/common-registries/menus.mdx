@@ -1,0 +1,62 @@
+---
+sidebar_position: 4
+title: Menus
+---
+
+# Menus
+
+`dev.architectury.registry.menu.MenuRegistry`
+
+Register container `MenuType`s and open them for players. For **simple** menus you can use the
+vanilla `MenuType` constructor directly; `MenuRegistry` adds cross-platform support for
+**extended** menus that send extra data to the client when they open.
+
+## Registering a menu type
+
+Register `MenuType`s through a [`DeferredRegister`](./deferred-register.mdx) for
+`Registries.MENU`.
+
+For an **extended** menu (one that needs extra data on open), create the type with
+`MenuRegistry.ofExtended`:
+
+```java
+public static final DeferredRegister<MenuType<?>> MENUS =
+    DeferredRegister.create(MyMod.MOD_ID, Registries.MENU);
+
+public static final RegistrySupplier<MenuType<MyMenu>> MY_MENU =
+    MENUS.register("my_menu", () -> MenuRegistry.ofExtended(
+        (windowId, inventory, buf) -> new MyMenu(windowId, inventory, buf)));
+```
+
+The factory receives the window id, the player `Inventory`, and a `FriendlyByteBuf` containing
+the extra data you wrote when opening the menu.
+
+## Opening a menu
+
+| Method | Use for |
+|---|---|
+| `openMenu(ServerPlayer, MenuProvider)` | A plain menu with no extra data. |
+| `openExtendedMenu(ServerPlayer, MenuProvider, Consumer<FriendlyByteBuf>)` | An extended menu; write your extra data into the buffer. |
+| `openExtendedMenu(ServerPlayer, ExtendedMenuProvider)` | An extended menu, when your provider implements `ExtendedMenuProvider`. |
+
+```java
+MenuRegistry.openExtendedMenu(serverPlayer, myProvider, buf -> {
+    buf.writeBlockPos(pos); // extra data sent to the client
+});
+```
+
+### ExtendedMenuProvider
+
+`dev.architectury.registry.menu.ExtendedMenuProvider` is a `MenuProvider` with one extra method:
+
+```java
+void saveExtraData(FriendlyByteBuf buf);
+```
+
+Implement it to bundle the menu's display name, the menu factory, and the extra-data writer in
+one object, then pass it to `openExtendedMenu`.
+
+:::note
+This page covers the server-side menu type and opening logic. To bind a **screen** (the client
+GUI) to your menu type, see [Menu Screens](../client-registries/menu-screens.mdx).
+:::

@@ -13,11 +13,25 @@ Modify or replace loot tables as they load.
 
 | Event | Listener method | Returns |
 |---|---|---|
-| `MODIFY_LOOT_TABLE` | `modifyLootTable(HolderLookup.Provider registries, ResourceKey<LootTable> key, LootTableModificationContext context, boolean builtin)` | `void` - add pools to the existing table. |
-| `REPLACE_LOOT_TABLE` | `replaceLootTable(HolderLookup.Provider registries, ResourceKey<LootTable> key, LootTable original)` | `CompoundEventResult<LootTable>` - interrupt to swap the whole table. |
+| `MODIFY_LOOT_TABLE` | `modifyLootTable(HolderGetter.Provider registries, ResourceKey<LootTable> key, LootTableModificationContext context, boolean builtin)` | `void` - add pools to the existing table. |
+| `REPLACE_LOOT_TABLE` | `replaceLootTable(HolderGetter.Provider registries, ResourceKey<LootTable> key, LootTable original)` | `CompoundEventResult<LootTable>` - interrupt to swap the whole table. |
 
-:::info[Added in 21.1]
-`REPLACE_LOOT_TABLE` was added in Architectury API **21.1**.
+## The `registries` parameter
+
+Both listeners receive a `HolderGetter.Provider`, which resolves the holders and tags a loot table
+refers to through `lookupOrThrow`, `get(ResourceKey)` and `get(TagKey)`. It cannot enumerate
+registries or build a `RegistryOps`.
+
+:::warning[Do not cast it to `HolderLookup.Provider`]
+The parameter was widened from `HolderLookup.Provider` to `HolderGetter.Provider` in Architectury
+API **22.0**, because the loaders genuinely differ here. Fabric's `LootTableEvents` passes a real
+`HolderLookup.Provider`, so an `instanceof` check succeeds there. NeoForge passes a method
+reference that implements `HolderGetter.Provider` and nothing else, so the same check is always
+`false` and a cast always throws.
+
+A listener that recovers the wider type therefore works on Fabric and fails on every NeoForge
+install. If you need a `RegistryOps` to deserialize loot content, build it outside these events
+from a provider you own.
 :::
 
 ## Adding to a table

@@ -1,0 +1,90 @@
+---
+sidebar_position: 2
+title: Porting from 26.2 to 26.3
+---
+
+# Porting from 26.2 to 26.3
+
+This page is a guide for modders who want to port their mod from Architectury API 21.1 to 22.
+It covers the breaking changes and new features introduced in Architectury 22 for Minecraft 26.3.
+
+## Dependency versions
+Architectury API 22 for Minecraft 26.3 raises the minimum loader versions.
+- Minecraft `26.3`
+- Fabric Loader `0.19.5`
+- Fabric API `0.160.5`
+- NeoForge `26.3.0.0-beta`
+
+## Additions
+- `BlockTransformerHooks`
+    - `addStrippable(Block, Block)`, `addFlattenable(Block, BlockState)` and `addTillable(Block, BlockState)`, replacing the three per-tool hook classes.
+- `ExtendedMenuDataProvider<D>`
+    - New interface, the codec-based replacement for `ExtendedMenuProvider`.
+- `MenuRegistry`
+    - `ofExtended(ExtendedMenuDataFactory<T, D>, StreamCodec<? super RegistryFriendlyByteBuf, D>)` to create an extended `MenuType` whose data is serialized by a codec.
+    - `openExtendedMenu(ServerPlayer, ExtendedMenuDataProvider<D>)` to open it.
+    - `ExtendedMenuDataFactory<T, D>`, a menu factory receiving the decoded data instead of a buffer.
+- `FuelRegistry`
+    - `register(int time, float speedMultiplier, ItemLike... items)` to control how fast a fuel smelts, `1.0` being the normal speed. The existing `register(int, ItemLike...)` now delegates to it with `1.0`.
+- `BiomeHooks`
+    - `extractMobSpawnSettings(Biome)` and `extractCreatureProbability(Biome)`
+    - `SpawnSettingsWrapped(MobSpawnSettings, float)`
+
+## Deprecations
+- `ExtendedMenuProvider`
+    - Use `ExtendedMenuDataProvider<D>` instead.
+        - Will be removed in Architectury 23.
+- `MenuRegistry`
+    - `ofExtended(ExtendedMenuTypeFactory<T>)`
+        - Use `ofExtended(ExtendedMenuDataFactory<T, D>, StreamCodec)` instead.
+        - Will be removed in Architectury 23.
+    - `openExtendedMenu(ServerPlayer, MenuProvider, Consumer<FriendlyByteBuf>)`
+    - `openExtendedMenu(ServerPlayer, ExtendedMenuProvider)`
+        - Use `openExtendedMenu(ServerPlayer, ExtendedMenuDataProvider)` instead.
+        - Will be removed in Architectury 23.
+    - `ExtendedMenuTypeFactory<T>`
+        - Use `ExtendedMenuDataFactory<T, D>` instead.
+        - Will be removed in Architectury 23.
+
+## Breaking Changes
+- `LootEvent`
+    - `ModifyLootTable#modifyLootTable(HolderLookup.Provider, ResourceKey, LootTableModificationContext, boolean)` -> `modifyLootTable(HolderGetter.Provider, ResourceKey, LootTableModificationContext, boolean)`
+    - `ReplaceLootTable#replaceLootTable(HolderLookup.Provider, ResourceKey, LootTable)` -> `replaceLootTable(HolderGetter.Provider, ResourceKey, LootTable)`
+- `FuelRegistry`
+    - `get(ItemStack, RecipeType<?>, FuelValues)` -> `get(ItemStack, ServerLevel)`
+- `GenerationProperties`
+    - Carvers are typed as `WorldCarver` instead of `ConfiguredWorldCarver<?>`, following the vanilla rename.
+        - `getCarvers()`, `addCarver(Holder)`, `addCarver(ResourceKey)` and `removeCarver(ResourceKey)` all changed accordingly.
+- `BiomeHooks.GenerationSettingsWrapped`
+    - `getCarvers()` returns `Iterable<Holder<WorldCarver>>`.
+
+## Removal
+- `AxeItemHooks`
+    - `addStrippable(Block, Block)`
+        - Use `BlockTransformerHooks.addStrippable(Block, Block)` instead.
+- `ShovelItemHooks`
+    - `addFlattenable(Block, BlockState)`
+        - Use `BlockTransformerHooks.addFlattenable(Block, BlockState)` instead.
+- `HoeItemHooks`
+    - `addTillable(Block, Predicate<UseOnContext>, Consumer<UseOnContext>, Function<UseOnContext, BlockState>)`
+        - Use `BlockTransformerHooks.addTillable(Block, BlockState)` instead.
+- `DyeColorHooks`
+    - `getColorValue(DyeColor)`
+        - Use the vanilla `DyeColor#getTextureDiffuseColor()` instead. Both loaders resolved the hook to that call already.
+- `EventFactory`
+    - `createInteractionResult(Class<T>)`
+    - `createInteractionResult(T...)`
+- `LootEvent`
+    - `ModifyLootTable#modifyLootTable(ResourceKey, LootTableModificationContext, boolean)`
+        - Use `modifyLootTable(HolderGetter.Provider, ResourceKey, LootTableModificationContext, boolean)` instead.
+- `Mod`
+    - `getFilePath()`
+        - Use `getFilePaths()` instead.
+- `RegistrarManager`
+    - `get(Registry<T>)`
+        - Use `get(ResourceKey<Registry<T>>)` instead.
+    - `getId(T, Registry<T>)`
+        - Use `getId(T, ResourceKey<Registry<T>>)` instead.
+- `RegistrarManager.RegistryProvider`
+    - `get(Registry<T>)`
+        - Use `get(ResourceKey<Registry<T>>)` instead.

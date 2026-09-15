@@ -57,15 +57,15 @@ const config = {
           // The "current" docs (the files in ./docs) are the latest version and
           // are served at the site root with no version segment in the URL.
           //
-          // When porting to a new Minecraft version (e.g. 26.2):
-          //   1. Run: npm run docusaurus docs:version 26.1.x
-          //      (snapshots the current docs into versioned_docs/version-26.1.x)
+          // When porting to a new Minecraft version (e.g. 26.3):
+          //   1. Run: npm run docusaurus docs:version 26.2.x
+          //      (snapshots the current docs into versioned_docs/version-26.2.x)
           //   2. Keep editing ./docs as the new version, and update the
-          //      `current.label` below to the new version (e.g. "26.2.x").
+          //      `current.label` below to the new version (e.g. "26.3").
           lastVersion: 'current',
           versions: {
             current: {
-              label: '26.2',
+              label: '26.3',
             },
           },
         },

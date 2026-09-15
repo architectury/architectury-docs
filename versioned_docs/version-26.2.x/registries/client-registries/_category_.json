@@ -1,0 +1,10 @@
+{
+  "label": "Client Registries",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "slug": "/client-registries",
+    "title": "Client Registries",
+    "description": "Register client-only things: screens for your menus, entity and block-entity renderers, particles, colors, key mappings, tooltip components, and a config screen. Everything here must be registered from client-side code only."
+  }
+}

@@ -1,0 +1,90 @@
+---
+sidebar_position: 4
+title: FluidStackTemplate
+---
+
+# FluidStackTemplate
+
+`dev.architectury.fluid.FluidStackTemplate`
+
+A `FluidStackTemplate` is a lightweight, **`Holder`-based** description of a fluid, amount, and
+optional data components. Where a [`FluidStack`](./fluid-stack.mdx) holds a resolved `Fluid` and
+is meant to be passed around and mutated, a template holds a `Holder<Fluid>` and is a stable,
+serializable descriptor - handy for recipes, data-driven definitions, and config. Turn one into a
+working `FluidStack` with `create()`.
+
+:::info[Usable before registries are loaded]
+Since Minecraft 26.1, constructing a [`FluidStack`](./fluid-stack.mdx) **requires
+registries to be loaded** - so you can't create one in a static initializer, a recipe, or
+anywhere that runs before registries are available. A `FluidStackTemplate` **can** be created
+that early, because it holds an immutable `Holder<Fluid>` rather than a resolved `Fluid`. This is why recipes
+and data files use templates: build the template up front, then call `create()` to materialize a
+`FluidStack` once registries are loaded.
+:::
+
+## Creating a template
+
+```java
+FluidStackTemplate template = FluidStackTemplate.of(fluidHolder, FluidStack.bucketAmount());
+```
+
+Overloads:
+
+- `of(Holder<Fluid> fluid, long amount)`
+- `of(Holder<Fluid> fluid, long amount, DataComponentPatch patch)`
+
+As with `FluidStack`, the amount unit is platform-specific - use `FluidStack.bucketAmount()`.
+
+## Turning it into a FluidStack
+
+```java
+FluidStack stack = template.create();
+```
+
+`create()` resolves the holder and builds a usable `FluidStack` with the same amount and
+components.
+
+## Reading
+
+| Method | Description |
+|---|---|
+| `fluid()` | The `Holder<Fluid>`. |
+| `amount()` | The amount. |
+| `getComponents()` / `getPatch()` | Data components on the template. |
+| `getTranslationKey()` | Translation key for the fluid. |
+
+`FluidStackTemplate` is a `DataComponentHolder`, so the usual component accessors work too.
+
+## Deriving new templates
+
+| Method | Description |
+|---|---|
+| `copy()` | A copy of the template. |
+| `copyWithAmount(long)` | A copy with a different amount. |
+| `apply(DataComponentPatch)` | Apply data components. |
+| `apply(int amount, DataComponentPatch)` | Apply an amount and data components. |
+
+## Comparing
+
+`isFluidStackEqual(other)`, `isFluidEqual(other)`, and `isComponentEqual(other)` mirror the
+equivalent [`FluidStack`](./fluid-stack.mdx) checks.
+
+## Serialization
+
+```java
+FluidStackTemplate.CODEC;        // Codec<FluidStackTemplate>
+FluidStackTemplate.STREAM_CODEC; // StreamCodec<RegistryFriendlyByteBuf, FluidStackTemplate>
+
+template.write(buf);
+FluidStackTemplate fromBuf = FluidStackTemplate.read(buf);
+
+Tag tag = template.write(provider, new CompoundTag());
+Optional<FluidStackTemplate> fromTag = FluidStackTemplate.read(provider, tag);
+```
+
+:::note[Template vs. stack]
+Reach for a **`FluidStackTemplate`** when you want a serializable, `Holder`-based description of a
+fluid (a recipe ingredient, a data definition), or when you need to define a fluid stack **before
+registries are loaded**. Reach for a **`FluidStack`** when you need the concrete, mutable stack to
+move fluid around at runtime. Convert with `template.create()`.
+:::

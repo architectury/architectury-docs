@@ -29,12 +29,6 @@ right-click / left-click behavior.
 | `CLIENT_LEFT_CLICK_AIR` | `click(Player, InteractionHand)` | `void` - **client only** |
 | `CLIENT_RIGHT_CLICK_AIR` | `click(Player, InteractionHand)` | `void` - **client only** |
 
-:::info[Added in 21.1]
-`USE_ITEM_ON_BLOCK`, `USE_BLOCK_WITHOUT_ITEM`, `USE_ITEM_ON`, `USE_ITEM`,
-`PICK_ITEM_FROM_BLOCK`, `PICK_ITEM_FROM_ENTITY` and `CLIENT_PRE_ATTACK` were added in
-Architectury API **21.1**.
-:::
-
 :::note[Naming an exact vanilla outcome]
 These events return an [`EventResult`](../../events/event-results.mdx). Return
 `EventResult.pass()` to stay out of the way and let other listeners and vanilla logic run. Any

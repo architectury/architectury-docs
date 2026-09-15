@@ -1,0 +1,10 @@
+{
+  "label": "Porting",
+  "position": 10,
+  "link": {
+    "type": "generated-index",
+    "slug": "/porting",
+    "title": "Porting",
+    "description": "Migration guides for moving a mod from one Architectury API major version to the next. Each guide lists the additions, deprecations, breaking changes, and removals introduced for that Minecraft version."
+  }
+}
